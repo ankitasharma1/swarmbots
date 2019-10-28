@@ -3,6 +3,7 @@ import config
 import socket
 import message
 from threading import Thread
+import threading
 import helper
 import time
 import states
@@ -18,12 +19,21 @@ class Node():
         self.port = int(port)
         self.ip = socket.gethostbyname(socket.gethostname())
         self.leader = None
+        self.term = 0
+        self.voted_for = None
+        self.request_vote_lock = threading.Lock()      
+        self.request_vote = []
+        self.response_vote_lock = threading.Lock()
+        self.response_vote = []
+        self.leader_heartbeat_lock = threading.Lock()
+        self.leader_heartbeat = []
         # For cleaning up purposes.
         self.threads = []
         # <K: node id, V: (ip address, port)>
         self.cluster_info = dict()
         # <K: node id, V: socket>
         self.sockets = dict()
+        self.sockets_lock = threading.Lock()
         helper.print_and_flush("Starting node on >>%s<< port %s: %s" %(self.id, self.ip, port))
 
     # Helper function that will check whether all nodes have joined the cluster.
@@ -31,7 +41,6 @@ class Node():
         while True:
             # Wait for all nodes to join the cluster.              
             if len(self.cluster_info) == self.config.size:
-                helper.print_and_flush("All nodes have joined the cluster")
                 # Send start message to all nodes in the cluster.
                 for id, socket in self.sockets.items():
                     if id != self.id:
@@ -69,44 +78,77 @@ class Node():
         while True:
             try:
                 # Deserialize the json into a dict.
-                data = message.deserialize(socket.recv(size))
+                messages = message.deserialize(socket.recv(size))
+                for m in messages:
+                    helper.print_and_flush("=========")
+                    helper.print_and_flush(m)
+                    helper.print_and_flush("=========")
 
-                if data:
-                    message_type = data.get(message.TYPE)
-                    # Handle request to join the cluster.
-                    if message_type == message.JOIN:
-                        message_id = data.get(message.ID)
-                        # Careful distinctino between joining and rejoining the cluster.
-                        if message_id in self.cluster_info.keys():
-                            # A node is rejoining the cluster.
-                            socket.send(message.startMessage(self.id, self.cluster_info))                             
-                        else: 
-                            # Joining for the first time.
-                            self.sockets.update({data.get(message.ID): socket})
-                            self.cluster_info.update({data.get(message.ID): (data.get(message.IP), data.get(message.PORT))})
-                    # Message to start.
-                    elif message_type == message.START:
-                        self.cluster_info = data.get(message.CLUSTER_INFO)
-                        self.sockets.update({data.get(message.ID): socket})
-                        self.connect()
-                else:
-                    self.cleanup(socket)
-                    return
+                    if m:
+                        message_type = m.get(message.TYPE)
+                        # Handle request to join the cluster.
+                        if message_type == message.JOIN:
+                            message_id = m.get(message.ID)
+                            # Careful distinctino between joining and rejoining the cluster.
+                            if message_id in self.cluster_info.keys():
+                                # A node is rejoining the cluster.
+                                socket.send(message.startMessage(self.id, self.cluster_info)) 
+                                self.sockets.update({m.get(message.ID): socket})                            
+                            else: 
+                                # Joining for the first time.
+                                self.sockets.update({m.get(message.ID): socket})
+                                self.cluster_info.update({m.get(message.ID): (m.get(message.IP), m.get(message.PORT))})
+                        # Message to start.
+                        elif message_type == message.START:
+                            self.cluster_info = m.get(message.CLUSTER_INFO)
+                            self.sockets.update({m.get(message.ID): socket})
+                            self.connect() 
+                        # Handle reconnect scenario. Update socket connections.
+                        elif message_type == message.CONNECT:
+                            self.sockets.update({m.get(message.ID): socket}) 
+                        
+                        # Handle request vote message.
+                        elif message_type == message.REQUEST_VOTE:
+                            #helper.print_and_flush("Received request vote message")
+                            self.request_vote_lock.acquire()
+                            self.request_vote.append(m) 
+                            self.request_vote_lock.release()  
+                        # Handle response vote message.
+                        elif message_type == message.RESPONSE_VOTE:
+                            helper.print_and_flush("Received response vote message")                        
+                            self.response_vote_lock.acquire()
+                            self.response_vote.append(m) 
+                            self.response_vote_lock.release()                          
+                        # Handle leader heart beat message.
+                        elif message_type == message.LEADER_HEARTBEAT:
+                            #helper.print_and_flush("Received leader heartbeat")                        
+                            self.leader_heartbeat_lock.acquire()
+                            self.leader_heartbeat.append(m)
+                            self.leader_heartbeat_lock.release()       
+                                 
+                    else:
+                        self.cleanup(socket)
+                        return
             except Exception, e: 
-                #helper.print_and_flush(str(e))
+                helper.print_and_flush(str(e))
                 self.cleanup(socket)
                 return
 
     # Clean up threads. Close sockets.
     def cleanup(self, socket):
         helper.print_and_flush("Closing socket connection")
+        self.sockets_lock.acquire()
         for id, s in self.sockets.items():
             if s == socket:
                 del self.sockets[id]
                 break
+        self.sockets_lock.release()
         socket.close()        
         return
 
+    # A node gracefully exits.
+    def graceful_cleanup(self):
+        pass
 
     # Join the cluster.
     def join(self, rn):
@@ -128,9 +170,17 @@ class Node():
             # node we have already connected to.
             if id != self.id and id not in self.sockets.keys():                
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-                s.connect((connection_info[0], connection_info[1]))
-                helper.print_and_flush("Connected to %s:%s" %(connection_info[0], connection_info[1]))
-                self.sockets.update({id: s})
+                try:
+                    s.connect((connection_info[0], connection_info[1]))
+                    s.send(message.connectMessage(self.id))
+                    helper.print_and_flush("Connected to %s:%s" %(connection_info[0], connection_info[1]))                
+                    self.sockets.update({id: s})
+                    t = Thread(target=self.listenOnSocket, args=(s,))
+                    self.threads.append(t)   
+                    t.start()                
+                except Exception, e:
+                    s.close()
+
         states.follower(self)                
 
     # Return list of socket connections to the nodes in the raft cluster known by the current node.

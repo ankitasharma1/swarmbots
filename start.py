@@ -1,10 +1,8 @@
 import node
 import constants
+import repl
 import sys
 from threading import Thread
-
-# Global node.
-n = None
 
 def main():
     # Check command line arguments.
@@ -22,13 +20,17 @@ def main():
     port = sys.argv[2]
     n = node.Node(id, port)
     # Handle incoming connections.    
-    thread = Thread(target=n.handleConnections, args=())
-    thread.start()
+    handle_conn_thread = Thread(target=n.handleConnections, args=())
+    handle_conn_thread.start()
     if len(sys.argv) == constants.JOINING_CLUSTER_CMDS:
         rn = node.RemoteNode(sys.argv[3], sys.argv[4])
-        # Request for node to join or rejoinn the cluster.
+        # Request for node to join or rejoin the cluster.
         n.join(rn)
     else:
-        start = Thread(target=n.startCluster, args=())
-        start.start()
+        start_thread = Thread(target=n.startCluster, args=())
+        start_thread.start()
+
+    # Start the repl to query node diagnostics.
+    repl.repl(n)
+
 main()

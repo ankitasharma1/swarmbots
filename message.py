@@ -1,11 +1,16 @@
 import constants
 import json
 import ruamel.yaml as yaml
+import helper
 
 # Message Type
 TYPE = "type"
 JOIN = "join"
 START = "start"
+CONNECT = "connect"
+REQUEST_VOTE = "request_vote"
+RESPONSE_VOTE = "response_vote"
+LEADER_HEARTBEAT = "leader_heart_beat"
 
 # Params for JOIN
 ID = "id"
@@ -15,7 +20,39 @@ PORT = "port"
 # Params for START
 CLUSTER_INFO = "cluster_info"
 
+# Params for REQUEST_VOTE
+CURR_TERM = "curr_term"
+
+# Params for RESPONSE_VOTE
+VOTE = "vote"
+
 #--------------------------------------------#
+# Leader heart beat
+def leaderHeartBeat(id):
+  message = {TYPE: LEADER_HEARTBEAT, 
+             ID: id}
+  return json.dumps(message)
+
+# Request vote message
+def requestVoteMessage(id, curr_term):
+  message = {TYPE: REQUEST_VOTE, 
+             ID: id, 
+             CURR_TERM: curr_term}
+  return json.dumps(message)
+
+# Response vote message
+def responseVoteMessage(id, curr_term, vote):
+  message = {TYPE: RESPONSE_VOTE, 
+             ID: id, 
+             CURR_TERM: curr_term, 
+             VOTE: vote}
+  return json.dumps(message)
+
+# Message to connect to another node
+def connectMessage(id):
+    message = {TYPE: CONNECT,
+               ID: id}
+    return json.dumps(message)
 
 # When joining the cluster, the node sends its id, ip address
 # and port number.
@@ -37,4 +74,4 @@ def startMessage(id, clusterInfo):
 
 # Message to deserialize json to python dict object.
 def deserialize(message):
-    return yaml.safe_load(message)
+  return yaml.safe_load_all(message)
