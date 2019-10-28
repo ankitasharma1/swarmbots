@@ -7,6 +7,7 @@ import threading
 import helper
 import time
 import states
+import sys
 
 # Node class.
 class Node():
@@ -21,16 +22,21 @@ class Node():
         self.leader = None
         self.term = 0
         self.voted_for = None
+        # Queue for receiving vote requests.
         self.request_vote_lock = threading.Lock()      
         self.request_vote = []
+        # Queue for receiving vote responses.
         self.response_vote_lock = threading.Lock()
         self.response_vote = []
+        # Queue for receiving heartbeat messages from the leader.
         self.leader_heartbeat_lock = threading.Lock()
         self.leader_heartbeat = []
         # For cleaning up purposes.
         self.threads = []
+        # Aware of the entire cluster configuration.
         # <K: node id, V: (ip address, port)>
         self.cluster_info = dict()
+        # Store communication mechanisms for each node.
         # <K: node id, V: socket>
         self.sockets = dict()
         self.sockets_lock = threading.Lock()
@@ -80,10 +86,9 @@ class Node():
                 # Deserialize the json into a dict.
                 messages = message.deserialize(socket.recv(size))
                 for m in messages:
-                    helper.print_and_flush("=========")
-                    helper.print_and_flush(m)
-                    helper.print_and_flush("=========")
-
+                    #helper.print_and_flush("=========")
+                    #helper.print_and_flush(m)
+                    #helper.print_and_flush("=========")
                     if m:
                         message_type = m.get(message.TYPE)
                         # Handle request to join the cluster.
@@ -105,32 +110,27 @@ class Node():
                             self.connect() 
                         # Handle reconnect scenario. Update socket connections.
                         elif message_type == message.CONNECT:
-                            self.sockets.update({m.get(message.ID): socket}) 
-                        
+                            self.sockets.update({m.get(message.ID): socket})                         
                         # Handle request vote message.
                         elif message_type == message.REQUEST_VOTE:
-                            #helper.print_and_flush("Received request vote message")
                             self.request_vote_lock.acquire()
                             self.request_vote.append(m) 
-                            self.request_vote_lock.release()  
+                            self.request_vote_lock.release() 
                         # Handle response vote message.
                         elif message_type == message.RESPONSE_VOTE:
-                            helper.print_and_flush("Received response vote message")                        
                             self.response_vote_lock.acquire()
                             self.response_vote.append(m) 
                             self.response_vote_lock.release()                          
                         # Handle leader heart beat message.
                         elif message_type == message.LEADER_HEARTBEAT:
-                            #helper.print_and_flush("Received leader heartbeat")                        
                             self.leader_heartbeat_lock.acquire()
                             self.leader_heartbeat.append(m)
-                            self.leader_heartbeat_lock.release()       
-                                 
+                            self.leader_heartbeat_lock.release()                                        
                     else:
                         self.cleanup(socket)
                         return
             except Exception, e: 
-                helper.print_and_flush(str(e))
+                #helper.print_and_flush(str(e))
                 self.cleanup(socket)
                 return
 

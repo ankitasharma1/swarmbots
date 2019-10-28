@@ -6,10 +6,11 @@ from threading import Thread
 import random
 
 def follower(node):
-    helper.print_and_flush(">>> Follower State term: %d\n" %(node.term))
+    helper.print_and_flush(">>> Follower State term: %s" %(node.term))
     # Update the state.
     node.state = constants.FOLLOWER
 
+    random.seed(time.time())
     oldtime = time.time()
 
     while True:
@@ -41,15 +42,12 @@ def follower(node):
             candidate_socket = node.sockets.get(candidate_id)
             node.sockets_lock.release()
 
-            helper.print_and_flush(candidate_id)
-            helper.print_and_flush(candidate_socket)
-
             # If the candidate's term is less than our own, reject.
             if candidate_term < node.term:
-                helper.print_and_flush(">>> F: reject vote for %d" %(candidate_id))
+                helper.print_and_flush(">>> F: reject vote for %s" %(candidate_id))
                 candidate_socket.send(message.responseVoteMessage(node.id, node.term, False))
             elif node.voted_for == None:
-                helper.print_and_flush(">>> F: vote granted for %d" %(candidate_id))
+                helper.print_and_flush(">>> F: vote granted for %s" %(candidate_id))
                 # Grant the vote.
                 node.voted_for = candidate_id
                 node.term = candidate_term
@@ -63,13 +61,14 @@ def candidate(node):
     candidate_election_reset(node)
     election_results = 0
 
-    helper.print_and_flush(">>> Candidate State term:%d\n" %(node.term))
+    helper.print_and_flush(">>> Candidate State term %s:" %(node.term))
 
+    random.seed(time.time())
     oldtime = time.time()
 
     while True:
         if election_results >= round(node.config.size/2):
-            helper.print_and_flush(">>> C: Got %d votes --> leader" %(election_results))
+            helper.print_and_flush(">>> C: Got %s votes --> leader" %(election_results))
             return leader(node)
 
         # Check whether election timeout has elapsed.
@@ -104,10 +103,10 @@ def candidate(node):
 
                 # Reject vote.
                 if candidate_term < node.term:
-                    helper.print_and_flush(">>> C: reject vote c_term: %d my_term: %d" %(candidate_term, node.term))                                    
+                    helper.print_and_flush(">>> C: reject vote for %s" %(candidate_id))  
                     candidate_socket.send(message.responseVoteMessage(node.id, node.term, False)) 
                 else: # Grant vote. Go back to being a follower.
-                    helper.print_and_flush(">>> C: vote granted for %d" %(candidate_id))                                                    
+                    helper.print_and_flush(">>> C: vote granted %s" %(candidate_id)) 
                     node.voted_for = candidate_id
                     node.term = candidate_term
                     candidate_socket.send(message.responseVoteMessage(node.id, node.term, True))
@@ -119,7 +118,7 @@ def candidate(node):
                 response_vote_message = node.response_vote.pop(0)
                 node.response_vote_lock.release()
                 vote = response_vote_message.get(message.VOTE)
-                term = response_vote_message.get(message.CURR_TERM)
+                term = int(response_vote_message.get(message.CURR_TERM))
                 # If we received a vote, record it.
                 if vote:
                     helper.print_and_flush(">>> C: received a vote")                                                        
@@ -135,7 +134,7 @@ def candidate_election_reset(node):
     # Vote for self.
     node.voted_for = node.id
     # Increment term.
-    node.term = node.term + 1
+    node.term = int(node.term) + 1
     # Set leader to None.
     node.leader = None
 
@@ -146,6 +145,6 @@ def candidate_election_reset(node):
     node.sockets_lock.release()
 
 def leader(node):
-    helper.print_and_flush(">>> Leader State term: %d\n" %(node.term))
+    helper.print_and_flush(">>> Leader State term: %s" %(node.term))
     # Update the state.
     node.state = constants.LEADER    

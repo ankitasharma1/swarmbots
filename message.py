@@ -26,6 +26,9 @@ CURR_TERM = "curr_term"
 # Params for RESPONSE_VOTE
 VOTE = "vote"
 
+# Misc. Params
+PADDING = "padding"
+
 #--------------------------------------------#
 # Leader heart beat
 def leaderHeartBeat(id):
@@ -37,21 +40,30 @@ def leaderHeartBeat(id):
 def requestVoteMessage(id, curr_term):
   message = {TYPE: REQUEST_VOTE, 
              ID: id, 
-             CURR_TERM: curr_term}
+             CURR_TERM: str(curr_term)}
+  helper.print_and_flush("=== REQUEST VOTE MSG ====")
+  helper.print_and_flush(len(json.dumps(message)))
+  helper.print_and_flush("=======")                 
   return json.dumps(message)
 
 # Response vote message
 def responseVoteMessage(id, curr_term, vote):
   message = {TYPE: RESPONSE_VOTE, 
              ID: id, 
-             CURR_TERM: curr_term, 
+             CURR_TERM: str(curr_term), 
              VOTE: vote}
+  helper.print_and_flush("=== RESPONSE VOTE MSG ====")
+  helper.print_and_flush(len(json.dumps(message)))
+  helper.print_and_flush("=======")    
   return json.dumps(message)
 
 # Message to connect to another node
 def connectMessage(id):
     message = {TYPE: CONNECT,
                ID: id}
+    helper.print_and_flush("=== CONNECT MSG===")
+    helper.print_and_flush(len(json.dumps(message)))
+    helper.print_and_flush("=======")    
     return json.dumps(message)
 
 # When joining the cluster, the node sends its id, ip address
@@ -60,6 +72,9 @@ def joinMessage(id, ip, port):
     message = {TYPE: JOIN, 
                ID: id,
                IP: ip, PORT: port}
+    helper.print_and_flush("===JOIN MSG===")
+    helper.print_and_flush(len(json.dumps(message)))
+    helper.print_and_flush("=======")                   
     return json.dumps(message)
 
 # When all nodes have connected to the cluster, send a message
@@ -70,6 +85,9 @@ def startMessage(id, clusterInfo):
         ID: id,
         CLUSTER_INFO: clusterInfo
     }
+    helper.print_and_flush("===START MSG====")
+    helper.print_and_flush(len(json.dumps(message)))
+    helper.print_and_flush("=======")        
     return json.dumps(message)
 
 # Message to deserialize json to python dict object.

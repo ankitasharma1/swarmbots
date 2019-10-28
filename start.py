@@ -3,6 +3,7 @@ import constants
 import repl
 import sys
 from threading import Thread
+import time
 
 def main():
     # Check command line arguments.
