@@ -59,7 +59,9 @@ def candidate(node):
     # Update the state.
     node.state = constants.CANDIDATE
     candidate_election_reset(node)
-    election_results = 0
+    
+    # We count ourselves. Start at 1 rather than 0.
+    election_results = 1
 
     helper.print_and_flush(">>> Candidate State term %s:" %(node.term))
 
