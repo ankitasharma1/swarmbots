@@ -3,6 +3,9 @@ import json
 import ruamel.yaml as yaml
 import helper
 
+MESSAGE_SIZE = 256
+NOP = "x"
+
 # Message Type
 TYPE = "type"
 JOIN = "join"
@@ -34,6 +37,7 @@ PADDING = "padding"
 def leaderHeartBeat(id):
   message = {TYPE: LEADER_HEARTBEAT, 
              ID: id}
+  message = serialize(message)
   return json.dumps(message)
 
 # Request vote message
@@ -41,9 +45,7 @@ def requestVoteMessage(id, curr_term):
   message = {TYPE: REQUEST_VOTE, 
              ID: id, 
              CURR_TERM: str(curr_term)}
-  helper.print_and_flush("=== REQUEST VOTE MSG ====")
-  helper.print_and_flush(len(json.dumps(message)))
-  helper.print_and_flush("=======")                 
+  message = serialize(message)             
   return json.dumps(message)
 
 # Response vote message
@@ -52,18 +54,14 @@ def responseVoteMessage(id, curr_term, vote):
              ID: id, 
              CURR_TERM: str(curr_term), 
              VOTE: vote}
-  helper.print_and_flush("=== RESPONSE VOTE MSG ====")
-  helper.print_and_flush(len(json.dumps(message)))
-  helper.print_and_flush("=======")    
+  message = serialize(message)
   return json.dumps(message)
 
 # Message to connect to another node
 def connectMessage(id):
     message = {TYPE: CONNECT,
                ID: id}
-    helper.print_and_flush("=== CONNECT MSG===")
-    helper.print_and_flush(len(json.dumps(message)))
-    helper.print_and_flush("=======")    
+    message = serialize(message)
     return json.dumps(message)
 
 # When joining the cluster, the node sends its id, ip address
@@ -72,9 +70,7 @@ def joinMessage(id, ip, port):
     message = {TYPE: JOIN, 
                ID: id,
                IP: ip, PORT: port}
-    helper.print_and_flush("===JOIN MSG===")
-    helper.print_and_flush(len(json.dumps(message)))
-    helper.print_and_flush("=======")                   
+    message = serialize(message)
     return json.dumps(message)
 
 # When all nodes have connected to the cluster, send a message
@@ -85,10 +81,21 @@ def startMessage(id, clusterInfo):
         ID: id,
         CLUSTER_INFO: clusterInfo
     }
-    helper.print_and_flush("===START MSG====")
-    helper.print_and_flush(len(json.dumps(message)))
-    helper.print_and_flush("=======")        
+    message = serialize(message)
     return json.dumps(message)
+
+# Message to serialize the message by adding the appropriate amount
+# of padding.
+def serialize(message):
+  i = 0
+  padding = NOP
+  while i < MESSAGE_SIZE:
+    message.update({PADDING: padding * i})
+    # Add padding to the message until it is MESSAGE_SIZE
+    # number of bytes.
+    if len(json.dumps(message)) == MESSAGE_SIZE:
+      return message
+    i = i + 1
 
 # Message to deserialize json to python dict object.
 def deserialize(message):
