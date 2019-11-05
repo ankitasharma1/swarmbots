@@ -1,13 +1,6 @@
 from bluetooth import *
 import sys
 
-try:
-    input = raw_input
-except NameError:
-    pass  # Python 3
-
-addr = 'B8:27:EB:6A:D3:2D'
-
 if len(sys.argv) < 2:
     print("no device specified.  Searching all nearby bluetooth devices for")
     print("the SampleServer service")
