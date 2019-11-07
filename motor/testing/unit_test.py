@@ -20,9 +20,15 @@ def test_motor(motor, time_sec, throttle):
         kit.motor2.throttle = 0
 
 if __name__ == "__main__":
-    test_time = 0.25 # seconds
-    test_throttle = 1.0
-    test_motor("m1", test_time, test_throttle)
-    test_motor("m2", test_time, test_throttle)
-    test_motor("both", test_time, test_throttle)
+    try:
+        test_time = 5 # seconds
+        test_throttle = 0.75
+        test_motor("m1", test_time, test_throttle)
+        test_motor("both", test_time, test_throttle)
+        test_motor("m2", test_time, test_throttle)
+        test_motor("both", test_time, test_throttle)
+    except:
+        kit.motor1.throttle = 0
+        kit.motor2.throttle = 0
+        print("Exception detected, motors killed")
 
