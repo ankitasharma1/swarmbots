@@ -1,2 +1,2 @@
-THROTTLE = 0.75 # -1 to 1
-RUN_TIME = 0.5 # seconds
+THROTTLE = 0.5 # -1 to 1
+RUN_TIME = 0.2 # seconds
