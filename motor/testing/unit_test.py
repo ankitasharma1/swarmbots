@@ -21,8 +21,8 @@ def test_motor(motor, time_sec, throttle):
 
 if __name__ == "__main__":
     try:
-        test_time = 5 # seconds
-        test_throttle = 0.75
+        test_time = 0.2 # seconds
+        test_throttle = 0.50
         test_motor("m1", test_time, test_throttle)
         test_motor("both", test_time, test_throttle)
         test_motor("m2", test_time, test_throttle)
