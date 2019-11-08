@@ -16,3 +16,5 @@
 10. follow guide here: stackoverflow.com/questions/34599703
   * remember to add the chmod line in ExecStartPost
 11. sudo reboot now
+12. vim SWARMER\_ID.py and write the following:
+  `SWARMER_ID = "S<x>"` where x is the swarmer number 
