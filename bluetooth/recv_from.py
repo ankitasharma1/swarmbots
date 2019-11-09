@@ -38,6 +38,7 @@ class RecvFromAgent():
     def read(self):
         if self.connected:
             data = self.client_sock.recv(1024)
+            print(data) # TODO: delete, used for testing
             return data
         else:
             return None
@@ -72,7 +73,7 @@ if __name__ == "__main__":
                 print(receivedData)
                 # break
     except SocketError as e:
-        if e.errno != errno.ECONNRESET:
+        if e.errno != ECONNRESET:
             raise # unknown error!
         print("Connection reset by peer, starting clean up")
 
