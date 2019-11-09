@@ -37,8 +37,7 @@ class RecvFromAgent():
 
     def read(self):
         if self.connected:
-            data = self.client_sock.recv(1024)
-            print(data) # TODO: delete, used for testing
+            data = self.client_sock.recv(10)
             return data
         else:
             return None
