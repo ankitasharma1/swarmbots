@@ -50,7 +50,7 @@ class Controller():
 
     def debounce(self):
         elapsed_time = time() - self.last_press
-        if elapsed_time > self.dounce_interval:
+        if elapsed_time > self.debounce_interval:
             return False
         else:
             return True

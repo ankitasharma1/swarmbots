@@ -1,5 +1,6 @@
 import bluetooth as BT
-import sys
+from socket import error as SocketError
+from errno import ECONNRESET
 
 from SWARMER_ID import SWARMER_ID
 from SWARMER_BT_INFO import SWARMER_ADDR_DICT
@@ -46,22 +47,33 @@ class RecvFromAgent():
             return SWARMER_ADDR_DICT[self.client_info[0]]
 
     def clean_up(self):
-        self.client_sock.close()
-        self.server_sock.close()
+        try:
+            self.client_sock.close()
+        except:
+            pass
+
+        try:
+            self.server_sock.close()
+        except:
+            pass
+
         self.connected = False
 
 if __name__ == "__main__":
     # testing
     from SWARMER_BT_INFO import UUID
 
-    t = RecvFromAgent(UUID)
-    t.advertise()
-    while True:
-        receivedData = t.read()
-        if receivedData:
-            print(receivedData)
-            break
-
-    print(t.get_client_name())
+    try:
+        t = RecvFromAgent(UUID)
+        t.advertise()
+        while True:
+            receivedData = t.read()
+            if receivedData:
+                print(receivedData)
+                # break
+    except SocketError as e:
+        if e.errno != errno.ECONNRESET:
+            raise # unknown error!
+        print("Connection reset by peer, starting clean up")
 
     t.clean_up()

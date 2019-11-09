@@ -1,3 +1,5 @@
+# NOTE: This must be run as admin because the keyboard library is bullshit
+
 from controller import Controller
 from connect_to import ConnectToAgent
 
@@ -11,7 +13,10 @@ for agent in conn_agents:
     agent.connect()
 
 # TODO: TEST THIS!
-conn_agents = [agent for agent in conn_agents if agent.connected] 
-controller = Controller(DEBOUNCE_INTERVAL, KEYBOARD_CONFIG_DICT, conn_agents)
-print('Connected to swarmers, ready for commands')
-controller.start()
+conn_agents = [agent for agent in conn_agents if agent.connected]
+if not conn_agents:
+    print("ERROR: Couldn't establish connection with any swarmer")
+else:
+    controller = Controller(DEBOUNCE_INTERVAL, KEYBOARD_CONFIG_DICT, conn_agents)
+    print('Connected to swarmers, ready for commands')
+    controller.start()

@@ -13,7 +13,7 @@ class ConnectToAgent():
     def connect(self, try_again=False):
         service_matches = BT.find_service(uuid=self.uuid, address=self.to_addr)
         if len(service_matches) == 0:
-            print(f"ERROR: Couldn't find service from {self.to_addr}")
+            print(f"WARNING: Couldn't find service from {self.to_addr}")
             if try_again:
                 print("\tTrying again in 5 seconds ...")
                 time.sleep(5)
