@@ -1,6 +1,4 @@
 import bluetooth as BT
-from socket import error as SocketError
-from errno import ECONNRESET
 
 from SWARMER_ID import SWARMER_ID
 from SWARMER_BT_INFO import SWARMER_ADDR_DICT
@@ -71,9 +69,7 @@ if __name__ == "__main__":
             if receivedData:
                 print(receivedData)
                 # break
-    except SocketError as e:
-        if e.errno != ECONNRESET:
-            raise # unknown error!
-        print("Connection reset by peer, starting clean up")
+    except:
+        print("Connection dead, starting clean up")
 
     t.clean_up()
