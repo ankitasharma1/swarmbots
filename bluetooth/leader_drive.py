@@ -13,7 +13,7 @@ try:
     while True:
         receivedData = recv_agent.read()
         if receivedData == b'forward':
-            md.foward()
+            md.forward()
         if receivedData == b'backward':
             md.backward()
         if receivedData == b'right':
