@@ -1,3 +1,4 @@
+"""
 TODO: make 2 different UUIDs, one for controller communication and one for raft
 TODO: make driving commands 0.05 seconds longer to prevent driving lag
 TODO: tone down THROTTLE in MOTOR_CONFIG
@@ -36,4 +37,5 @@ TODO: tone down THROTTLE in MOTOR_CONFIG
   - maybe we should blink an LED or something? ORRRR we could give each bot a multi-color
     LED. The LED could be red when following, blue electing, green when leading, blink red
     when error?
-
+"""
+raise NotImplementedError
