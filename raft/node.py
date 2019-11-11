@@ -75,6 +75,7 @@ class Node():
             helper.print_and_flush("Got connection from " + addr[0] + ": " + str(addr[1])) 
             # Start a thread for each socket.
             t = Thread(target=self.listenOnSocket, args=(c,))
+            t.setDaemon(True)
             self.threads.append(t)   
             t.start()
         
@@ -83,8 +84,13 @@ class Node():
         size = constants.DATA_SIZE         
         while True:
             try:
+                bytes = socket.recv(size)
+                # Peer connection gracefully terminated.
+                if len(bytes) == 0:
+                    self.cleanup(socket)
+                    return
                 # Deserialize the json into a dict.
-                messages = message.deserialize(socket.recv(size))
+                messages = message.deserialize(bytes)
                 for m in messages:
                     #helper.print_and_flush("=========")
                     #helper.print_and_flush(m)
@@ -130,7 +136,7 @@ class Node():
                         self.cleanup(socket)
                         return
             except Exception, e: 
-                #helper.print_and_flush(str(e))
+                helper.print_and_flush(str(e))
                 self.cleanup(socket)
                 return
 
@@ -148,7 +154,9 @@ class Node():
 
     # A node gracefully exits.
     def graceful_cleanup(self):
-        pass
+        for id, s in self.sockets.items():
+            s.close()
+        return
 
     # Join the cluster.
     def join(self, rn):
@@ -160,6 +168,7 @@ class Node():
         # Listen for a 'start' response either when joning for the
         # first time or rejoining the cluster.
         t = Thread(target=self.listenOnSocket, args=(s,))
+        t.setDaemon(True)
         self.threads.append(t)   
         t.start()
 
@@ -176,6 +185,7 @@ class Node():
                     helper.print_and_flush("Connected to %s:%s" %(connection_info[0], connection_info[1]))                
                     self.sockets.update({id: s})
                     t = Thread(target=self.listenOnSocket, args=(s,))
+                    t.setDaemon(True)
                     self.threads.append(t)   
                     t.start()                
                 except Exception, e:

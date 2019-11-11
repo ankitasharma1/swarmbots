@@ -22,6 +22,7 @@ def main():
     n = node.Node(id, port)
     # Handle incoming connections.    
     handle_conn_thread = Thread(target=n.handleConnections, args=())
+    handle_conn_thread.setDaemon(True)
     handle_conn_thread.start()
     if len(sys.argv) == constants.JOINING_CLUSTER_CMDS:
         rn = node.RemoteNode(sys.argv[3], sys.argv[4])
@@ -29,6 +30,7 @@ def main():
         n.join(rn)
     else:
         start_thread = Thread(target=n.startCluster, args=())
+        start_thread.setDaemon(True)
         start_thread.start()
 
     # Start the repl to query node diagnostics.
