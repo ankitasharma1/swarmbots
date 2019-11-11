@@ -2,6 +2,13 @@ import sys
 import threading
 from threading import Thread
 import socket
+import time
+
+"""
+Cluster Info
+"""
+CLUSTER_SIZE = 3
+NUM_EXT_CONNS = 2
 
 """
 Commands
@@ -66,8 +73,8 @@ class Node():
       
     def start_raft(self):
         while True:
-            if len(self.sockets) == 2:
-                # TODO:sleep for a bit
+            if len(self.sockets) == NUM_EXT_CONNS:
+                time.sleep(2)
                 print(">> Start RAFT")
                 # TODO: do_follower(self)
                 return
@@ -104,7 +111,7 @@ class Node():
                          t = Thread(target=self.listen_on_socket, args=(s,))
                          t.setDaemon(True)
                          t.start()                
-                         if len(self.sockets) == 2:
+                         if len(self.sockets) == NUM_EXT_CONNS:
                               return
                      except Exception, e:
                          s.close()
