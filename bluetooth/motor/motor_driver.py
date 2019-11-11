@@ -20,15 +20,15 @@ class MotorDriver():
 
     @failsafe
     def right(self):
-        self.kit.motor2.throttle = self.throttle
-        sleep(self.run_time)
-        self.kit.motor2.throttle = 0
-
-    @failsafe
-    def left(self):
         self.kit.motor1.throttle = self.throttle
         sleep(self.run_time)
         self.kit.motor1.throttle = 0
+
+    @failsafe
+    def left(self):
+        self.kit.motor2.throttle = self.throttle
+        sleep(self.run_time)
+        self.kit.motor2.throttle = 0
 
     @failsafe
     def forward(self):
