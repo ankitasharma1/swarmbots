@@ -4,6 +4,7 @@ import time
 import message
 from threading import Thread
 import random
+import errno
 
 def follower(node):
     helper.print_and_flush(">>> Follower State term: %s" %(node.term))
@@ -17,21 +18,21 @@ def follower(node):
 
     while True:
         # Check whether election time out has elapsed.
-        diff = time.time() - oldtime
-        if (diff > election_timeout):
-            # If there is no leader, enter the candidate phase.
-            if node.leader == None:
-                helper.print_and_flush(">>> F: no leader --> candidate")
-                return candidate(node)
+        if ((time.time() - oldtime) > election_timeout):
+            # Enter the candidate phase if no heartbeats.
+            helper.print_and_flush(">>> F: no leader --> candidate")
+            return candidate(node)
         else:
             # If we receive heartbeat from leader.
             if len(node.leader_heartbeat) > 0:
                 node.leader_heartbeat_lock.acquire()
+                leader_heartbeat_message = node.leader_heartbeat.pop(0)
+                term = int(leader_heartbeat_message.get(message.CURR_TERM))
                 node.leader_heartbeat = []
                 node.leader_heartbeat_lock.release()
+                node.term = term
                 # Go back to being a follower.
-                node.voted_for = None
-                #helper.print_and_flush(">>> F: correspondance from leader --> follower")                
+                node.voted_for = None                             
                 oldtime = time.time()
 
         # If we receive a request vote message.
@@ -73,6 +74,7 @@ def candidate(node):
 
     random.seed(time.time())
     oldtime = time.time()
+    election_timeout = random.randrange(node.config.election_timeout)
 
     while True:
         if election_results >= round(node.config.size/2):
@@ -80,8 +82,7 @@ def candidate(node):
             return leader(node)
 
         # Check whether election timeout has elapsed.
-        diff = time.time() - oldtime
-        if diff > random.randrange(node.config.election_timeout):
+        if ((time.time() - oldtime) > election_timeout):
             # Reset the timer.          
             oldtime = time.time()
             # Election timeout elapses, start a new election.            
@@ -125,6 +126,7 @@ def candidate(node):
 
             # Process responses to vote.
             if len(node.response_vote) > 0:
+                print(">>> Response vote")
                 node.response_vote_lock.acquire()
                 response_vote_message = node.response_vote.pop(0)
                 node.response_vote = []
@@ -152,11 +154,21 @@ def candidate_election_reset(node):
     node.leader = None
 
     # Send request votes.
-    node.sockets_lock.acquire()
-    for id, socket in node.sockets.items():        
-        socket.send(message.requestVoteMessage(node.id, node.term))   
-    node.sockets_lock.release()
+    safe_send_to_all(node, message.requestVoteMessage(node.id, node.term))
 
+def safe_send_to_all(node, message):
+    node.sockets_lock.acquire()
+    for id, socket in node.sockets.items():
+        try:
+            socket.send(message)
+        except Exception, e:
+            helper.print_and_flush("------")                      
+            helper.print_and_flush(e)                      
+            node.sockets_lock.release()
+            node.cleanup(socket)
+            return
+    node.sockets_lock.release()
+   
 def leader(node):
     helper.print_and_flush(">>> Leader State term: %s" %(node.term))
 
@@ -164,8 +176,18 @@ def leader(node):
     node.state = constants.LEADER
 
     while True:
+        # If we receive heartbeat from leader. Fall back if their term is > than our own.
+        if len(node.leader_heartbeat) > 0:
+            node.leader_heartbeat_lock.acquire()
+            leader_heartbeat_message = node.leader_heartbeat.pop(0)
+            term = int(leader_heartbeat_message.get(message.CURR_TERM))
+            node.leader_heartbeat = []
+            node.leader_heartbeat_lock.release()
+            # Go back to being a follower.
+            if term > node.term:
+                node.voted_for = None
+                helper.print_and_flush(">>> L: correspondance from leader --> follower")                
+                return follower(node)
         # Send leader heartbeats.
-        node.sockets_lock.acquire()
-        for id, socket in node.sockets.items():        
-            socket.send(message.leaderHeartBeat(node.id))   
-        node.sockets_lock.release()    
+        safe_send_to_all(node, message.leaderHeartBeat(node.id, node.term))
+ 

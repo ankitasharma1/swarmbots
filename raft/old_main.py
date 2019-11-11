@@ -8,12 +8,12 @@ import time
 def main():
     # Check command line arguments.
     if len(sys.argv) != constants.CLUSTER_INITIATOR_CMDS and len(sys.argv) != constants.JOINING_CLUSTER_CMDS:
-        print('usage: start.py [id] [port] or start.py [id] [port] [ip address] [port]')            
+        print('usage: main.py [id] [port] or start.py [id] [port] [ip address] [port]')            
         return
 
     # Error check the pass in port numbers.
     if not sys.argv[2].isdigit() and not sys.argv[4].isdigit():
-        print('usage: start.py [port] or start.py [port] [ip address] [port]')            
+        print('usage: main.py [port] or start.py [port] [ip address] [port]')            
         return        
 
     # Create a node.    

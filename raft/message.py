@@ -34,9 +34,10 @@ PADDING = "padding"
 
 #--------------------------------------------#
 # Leader heart beat
-def leaderHeartBeat(id):
+def leaderHeartBeat(id, curr_term):
   message = {TYPE: LEADER_HEARTBEAT, 
-             ID: id}
+             ID: id,
+             CURR_TERM: str(curr_term)}
   message = serialize(message)
   return json.dumps(message)
 
