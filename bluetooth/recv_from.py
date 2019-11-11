@@ -1,5 +1,4 @@
 import bluetooth as BT
-import sys
 
 from SWARMER_ID import SWARMER_ID
 from SWARMER_BT_INFO import SWARMER_ADDR_DICT
@@ -36,7 +35,7 @@ class RecvFromAgent():
 
     def read(self):
         if self.connected:
-            data = self.client_sock.recv(1024)
+            data = self.client_sock.recv(10)
             return data
         else:
             return None
@@ -46,22 +45,31 @@ class RecvFromAgent():
             return SWARMER_ADDR_DICT[self.client_info[0]]
 
     def clean_up(self):
-        self.client_sock.close()
-        self.server_sock.close()
+        try:
+            self.client_sock.close()
+        except:
+            pass
+
+        try:
+            self.server_sock.close()
+        except:
+            pass
+
         self.connected = False
 
 if __name__ == "__main__":
     # testing
     from SWARMER_BT_INFO import UUID
 
-    t = RecvFromAgent(UUID)
-    t.advertise()
-    while True:
-        receivedData = t.read()
-        if receivedData:
-            print(receivedData)
-            break
-
-    print(t.get_client_name())
+    try:
+        t = RecvFromAgent(UUID)
+        t.advertise()
+        while True:
+            receivedData = t.read()
+            if receivedData:
+                print(receivedData)
+                # break
+    except:
+        print("Connection dead, starting clean up")
 
     t.clean_up()
