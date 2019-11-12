@@ -1,195 +1,141 @@
-import constants
-import config
-import socket
-import message
-from threading import Thread
-import threading
-import helper
-import time
-import states
 import sys
+import threading
+from threading import Thread
+import socket
+import time
 
-# Node class.
+"""
+Cluster Info
+"""
+CLUSTER_SIZE = 3
+NUM_EXT_CONNS = 2
+
+"""
+Commands
+"""
+EXIT = 'exit'
+HELP = 'h'
+CLUSTER_INFO = 'c'
+
+"""
+States
+"""
+JOIN = 'join'
+FOLLOWER = 'follower'
+CANDIDATE = 'candidate'
+LEADER = 'leader'
+
 class Node():
-    def __init__(self, id=0, port=1234):
-        # All nodes start in the join state.
-        self.state = constants.JOIN
-        # All nodes are initialized with the cluster configuration.
-        self.config = config.Config()
+    def __init__(self, id, address, port):
+        print("Creating node %d " %(id))
         self.id = id
-        self.port = int(port)
-        self.ip = socket.gethostbyname(socket.gethostname())
-        self.leader = None
-        self.term = 0
-        self.voted_for = None
-        # Queue for receiving vote requests.
-        self.request_vote_lock = threading.Lock()      
-        self.request_vote = []
-        # Queue for receiving vote responses.
-        self.response_vote_lock = threading.Lock()
-        self.response_vote = []
-        # Queue for receiving heartbeat messages from the leader.
-        self.leader_heartbeat_lock = threading.Lock()
-        self.leader_heartbeat = []
-        # For cleaning up purposes.
-        self.threads = []
-        # Aware of the entire cluster configuration.
-        # <K: node id, V: (ip address, port)>
-        self.cluster_info = dict()
-        # Store communication mechanisms for each node.
-        # <K: node id, V: socket>
-        self.sockets = dict()
+        self.address = address
+        self.port = port
+        self.state = JOIN
+        self.cluster_info = None
+        # Basic synchronization is required to kep track of alive/closed sockets.
         self.sockets_lock = threading.Lock()
-        helper.print_and_flush("Starting node on >>%s<< port %s: %s" %(self.id, self.ip, port))
+        self.sockets = dict()
 
-    # Helper function that will check whether all nodes have joined the cluster.
-    def startCluster(self):
+    def init(self):
+        """
+        Waits until the cluster is fully connected to initiate raft.
+        """
+        start_raft_thread = Thread(target=self.start_raft, args=())
+        start_raft_thread.setDaemon(True)
+        start_raft_thread.start()        
+
+        """
+        Kick off serving the remote controller thread.
+        """
+        service_remote_thread = Thread(target=self.service_remote, args=())
+        service_remote_thread.setDaemon(True)
+        service_remote_thread.start()        
+
+        """
+        Kick off serving incoming connections thread.
+        """
+        service_incoming_conns_thread = Thread(target=self.service_incoming_conns, args=())
+        service_incoming_conns_thread.setDaemon(True)
+        service_incoming_conns_thread.start()        
+
+        """
+        Kick off connecting to the rest of the cluster thread.
+        """
+        connect_thread = Thread(target=self.connect, args=())
+        connect_thread.setDaemon(True)
+        connect_thread.start()        
+
+        """
+        Kick off REPL.
+        """
+        self.service_repl() 
+      
+    def start_raft(self):
         while True:
-            # Wait for all nodes to join the cluster.              
-            if len(self.cluster_info) == self.config.size:
-                # Send start message to all nodes in the cluster.
-                for id, socket in self.sockets.items():
-                    if id != self.id:
-                        socket.send(message.startMessage(self.id, self.cluster_info)) 
-                # Wait for some time and enter the follower state.
-                time.sleep(self.config.start_timeout)
-                states.follower(self)
+            if len(self.sockets) == NUM_EXT_CONNS:
+                time.sleep(2)
+                print(">> Start RAFT")
+                # TODO: do_follower(self)
                 return
 
-    # Helper function for handling incoming connections and spawning threads to handle that communication.
-    def handleConnections(self):
-        # Create socket object.
+    def service_remote(self):
+        print("Service commands from the remote.")
+        while True:
+            pass
+
+    def service_incoming_conns(self):
+        print("Service incoming connections.")
         s = socket.socket()
-
-        # Update the cluster with our information.
-        self.cluster_info.update({self.id: (self.ip, self.port)})
-
         s.bind(('', self.port))
-        helper.print_and_flush("Socket binded to %s" %(self.port))
+        print("Socket binded to %s" %(self.port))
         # Put the socket into listening mode.
         s.listen(5)
-        helper.print_and_flush("Socket is listening")
-
+        print("Socket is listening")
         while True:
             c, addr = s.accept()
-            helper.print_and_flush("Got connection from " + addr[0] + ": " + str(addr[1])) 
             # Start a thread for each socket.
-            t = Thread(target=self.listenOnSocket, args=(c,))
-            self.threads.append(t)   
+            t = Thread(target=self.listen_on_socket, args=(c,))
+            t.setDaemon(True)
             t.start()
-        
-    # Listen for incoming messages on this socket.
-    def listenOnSocket(self, socket):
-        size = constants.DATA_SIZE         
+
+    def connect(self):
+        print("Connect to rest of the cluster.")
         while True:
-            try:
-                # Deserialize the json into a dict.
-                messages = message.deserialize(socket.recv(size))
-                for m in messages:
-                    #helper.print_and_flush("=========")
-                    #helper.print_and_flush(m)
-                    #helper.print_and_flush("=========")
-                    if m:
-                        message_type = m.get(message.TYPE)
-                        # Handle request to join the cluster.
-                        if message_type == message.JOIN:
-                            message_id = m.get(message.ID)
-                            # Careful distinctino between joining and rejoining the cluster.
-                            if message_id in self.cluster_info.keys():
-                                # A node is rejoining the cluster.
-                                socket.send(message.startMessage(self.id, self.cluster_info)) 
-                                self.sockets.update({m.get(message.ID): socket})                            
-                            else: 
-                                # Joining for the first time.
-                                self.sockets.update({m.get(message.ID): socket})
-                                self.cluster_info.update({m.get(message.ID): (m.get(message.IP), m.get(message.PORT))})
-                        # Message to start.
-                        elif message_type == message.START:
-                            self.cluster_info = m.get(message.CLUSTER_INFO)
-                            self.sockets.update({m.get(message.ID): socket})
-                            self.connect() 
-                        # Handle reconnect scenario. Update socket connections.
-                        elif message_type == message.CONNECT:
-                            self.sockets.update({m.get(message.ID): socket})                         
-                        # Handle request vote message.
-                        elif message_type == message.REQUEST_VOTE:
-                            self.request_vote_lock.acquire()
-                            self.request_vote.append(m) 
-                            self.request_vote_lock.release() 
-                        # Handle response vote message.
-                        elif message_type == message.RESPONSE_VOTE:
-                            self.response_vote_lock.acquire()
-                            self.response_vote.append(m) 
-                            self.response_vote_lock.release()                          
-                        # Handle leader heart beat message.
-                        elif message_type == message.LEADER_HEARTBEAT:
-                            self.leader_heartbeat_lock.acquire()
-                            self.leader_heartbeat.append(m)
-                            self.leader_heartbeat_lock.release()                                        
-                    else:
-                        self.cleanup(socket)
-                        return
-            except Exception, e: 
-                #helper.print_and_flush(str(e))
-                self.cleanup(socket)
-                return
+             for id, connection_info in self.cluster_info.items():
+                  if id != self.id: 
+                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+                     try:
+                         s.connect((connection_info[0], connection_info[1]))
+                         self.sockets.update({id: s})
+                         t = Thread(target=self.listen_on_socket, args=(s,))
+                         t.setDaemon(True)
+                         t.start()                
+                         if len(self.sockets) == NUM_EXT_CONNS:
+                              return
+                     except Exception, e:
+                         s.close()
 
-    # Clean up threads. Close sockets.
-    def cleanup(self, socket):
-        helper.print_and_flush("Closing socket connection")
-        self.sockets_lock.acquire()
-        for id, s in self.sockets.items():
-            if s == socket:
-                del self.sockets[id]
-                break
-        self.sockets_lock.release()
-        socket.close()        
-        return
-
-    # A node gracefully exits.
-    def graceful_cleanup(self):
+    def listen_on_socket(self, socket):
         pass
 
-    # Join the cluster.
-    def join(self, rn):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-        s.connect((rn.ip, rn.port))
-        helper.print_and_flush("Connected to %s:%s" %(rn.ip, rn.port))
-        # Send request to join cluster message.
-        s.send(message.joinMessage(self.id, self.ip, self.port)) 
-        # Listen for a 'start' response either when joning for the
-        # first time or rejoining the cluster.
-        t = Thread(target=self.listenOnSocket, args=(s,))
-        self.threads.append(t)   
-        t.start()
-
-    # Connect to other nodes in the cluster.
-    def connect(self):   
-        for id, connection_info in self.cluster_info.items():
-            # We don't need to create a connection for ourself and for the
-            # node we have already connected to.
-            if id != self.id and id not in self.sockets.keys():                
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-                try:
-                    s.connect((connection_info[0], connection_info[1]))
-                    s.send(message.connectMessage(self.id))
-                    helper.print_and_flush("Connected to %s:%s" %(connection_info[0], connection_info[1]))                
-                    self.sockets.update({id: s})
-                    t = Thread(target=self.listenOnSocket, args=(s,))
-                    self.threads.append(t)   
-                    t.start()                
-                except Exception, e:
-                    s.close()
-
-        states.follower(self)                
-
-    # Return list of socket connections to the nodes in the raft cluster known by the current node.
-    def getSocketConnections(self):
-        return self.sockets
+    def service_repl(self):
+        print("Service Incoming connections.")
+        while True:
+            commands = sys.stdin.readline().split()
+            if len(commands) > 0:
+                command = commands[0]
+                if command == HELP:
+                    print("exit: %s" %(EXIT))
+                elif command == CLUSTER_INFO:
+                    print(self.cluster_info)
+                elif command == EXIT:
+                    print("Goodbye!")
+                    return
+                else:
+                    continue
+            else:
+                print("Unsupported command. For list of supported commands type 'h'")
 
 
-# Remote node class.
-class RemoteNode():
-    def __init__(self, ip="", port=1234):
-        self.ip = ip
-        self.port = int(port)
+
