@@ -5,7 +5,7 @@ from SWARMER_BT_INFO import SWARMER_ADDR_DICT
 
 
 class RecvFromAgent():
-    def __init__(self, uuid):
+    def __init__(self, uuid, msg_size):
         self.connected = False
         self.from_addr = None
         self.client_sock = None
@@ -13,6 +13,7 @@ class RecvFromAgent():
         self.uuid = uuid
         self.server_sock = BT.BluetoothSocket(BT.RFCOMM)
         self.name = SWARMER_ID + " Receiver"
+        self.msg_size = msg_size
 
         # init bt socket
         self.server_sock.bind(("", BT.PORT_ANY))
@@ -35,7 +36,7 @@ class RecvFromAgent():
 
     def read(self):
         if self.connected:
-            data = self.client_sock.recv(10)
+            data = self.client_sock.recv(self.msg_size)
             return data
         else:
             return None
@@ -61,8 +62,10 @@ if __name__ == "__main__":
     # testing
     from SWARMER_BT_INFO import UUID
 
+    msg_size = 10 # bytes
+
     try:
-        t = RecvFromAgent(UUID)
+        t = RecvFromAgent(UUID, msg_size)
         t.advertise()
         while True:
             receivedData = t.read()
