@@ -3,7 +3,7 @@ import sys
 from time import sleep
 
 
-class ConnectToAgent():
+class BT_Client():
     def __init__(self, to_addr, uuid):
         self.connected = False
         self.to_addr = to_addr

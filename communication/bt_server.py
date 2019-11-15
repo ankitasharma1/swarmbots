@@ -4,7 +4,7 @@ from SWARMER_ID import SWARMER_ID
 from SWARMER_BT_INFO import SWARMER_ADDR_DICT
 
 
-class RecvFromAgent():
+class BT_Server():
     def __init__(self, uuid, msg_size):
         self.connected = False
         self.from_addr = None

@@ -1,0 +1,3 @@
+James:
+  * Build remaining robots + solder
+  * 
