@@ -1,5 +1,8 @@
 from socket import socket, AF_INET, SOCK_STREAM
-from time import sleep, gmtime, strftime
+from time import sleep, gmtime, strftime, time
+
+PADDING_BTYE = b' '
+MSG_SIZE = 1024 # bytes
 
 def failsafe(func):
     def wrapper(*args, **kw_args):
@@ -58,16 +61,23 @@ class Client():
 
     @failsafe
     def send(self, msg):
-        self.sock.sendall(msg.encode('utf-8'))
+        byte_msg = msg.encode('utf-8')
+        padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
+        self.sock.send(padded_msg)
         self.debug_print("Message sent.")
         return True
 
     @failsafe
-    def recv(self, msg_size=1024):
+    def recv(self, msg_size=MSG_SIZE):
         while True:
             data = self.sock.recv(msg_size)
             if data:
-                return data.decode('utf-8')
+                msg = data.decode('utf-8').rstrip()
+                if msg == 'who are you?':
+                    self.send(self.swarmer_id)
+                    return 'sent swarmer id to server'
+                else:
+                    return msg
 
     def debug_print(self, print_string):
         if self.debug:
@@ -83,10 +93,12 @@ if __name__ == '__main__':
     port = 5000
     c = Client('YO', True)
     c.connect(host, port)
-    sleep(1)
-    c.send("hello")
-    sleep(1)
-    print(c.recv())
-    sleep(1)
+    start = time()
+    while time() - start < 20:
+        print('inside client loop')
+        sleep(4)
+        c.send("hello, the time is {gmtime()}")
+        # print(c.recv())
+        sleep(1)
     c.clean_up()
     print("goodbye.")

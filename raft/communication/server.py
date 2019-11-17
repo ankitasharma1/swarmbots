@@ -2,7 +2,11 @@ from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR
 from time import sleep, time, strftime, gmtime
 from threading import Thread, Lock
 from sys import exit
+from select import select
 
+PADDING_BTYE = b' '
+MSG_SIZE = 1024 # bytes
+RECV_TIMEOUT = 0.5
 
 class Server():
     def __init__(self, host, port, swarmer_id, debug=False):
@@ -52,7 +56,9 @@ class Server():
             return False
         else:
             try:
-                self.clients[client_addr].sendall(msg.encode('utf-8'))
+                byte_msg = msg.encode('utf-8')
+                padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
+                self.clients[client_addr].send(padded_msg)
                 self.debug_print("Message sent.")
                 return True
             except Exception as e:
@@ -64,15 +70,20 @@ class Server():
     def client_addresses(self):
         return list(self.clients.keys())
 
-    def recv(self, client_addr, msg_size=1024):
+    def get_client_name_local(self, client_addr):
+        self.send(client_addr, 'who are you?')
+        return self.recv(client_addr)
+
+    def recv(self, client_addr, msg_timeout=RECV_TIMEOUT, msg_size=MSG_SIZE):
         if not client_addr in self.clients:
-            self.debug_print(f"Error receiving message, {client_addr} not in clients dict")
+            self.debug_print(f"Error receiving message, {client_addr} not in dict")
             return None
         else:
             try:
-                data = self.clients[client_addr].recv(msg_size)
-                if data:
-                    return data.decode('utf-8')
+                ready = select([self.clients[client_addr]], [], [], msg_timeout)
+                if ready[0]:
+                    data = self.clients[client_addr].recv(msg_size)
+                    return data.decode('utf-8').rstrip()
                 else:
                     return None
             except Exception as e:
@@ -95,7 +106,7 @@ if __name__ == '__main__':
     start = time()
     s = Server(host, port, 'S1', True)
     while time() - start < 60:
-        print("Waiting for messages ...")
+        print("In client loop ...")
         for c in s.client_addresses():
             if not c in s.clients:
                 print(f"{c} not connected")
@@ -104,7 +115,12 @@ if __name__ == '__main__':
                 msg = s.recv(c)
                 if msg:
                     print(f"Message from {c}: {msg}")
+                else:
+                    print(f"No message from {c}")
                 s.send(c, f"some message from {c}")
+                # print(s.get_client_name_local(c))
+                sleep(1)
+                print("Done checking messages")
         sleep(1)
     s.clean_up()
     print("goodbye.")

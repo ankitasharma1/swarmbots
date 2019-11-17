@@ -31,10 +31,16 @@ CANDIDATE = 'candidate'
 LEADER = 'leader'
 
 class Node():
-    def __init__(self, swarmer_id):
+    def __init__(self, swarmer_id, debug=False):
         print(f"Creating Node: {swarmer_id}")
         self.swarmer_id = swarmer_id
         self.state = JOIN
+
+        # server (services incoming connections)
+        self.host = WIFI_DICT[swarmer_id]['address']
+        self.port = WIFI_DICT[swarmer_id]['port']
+        self.debug = debug
+        self.server = Server(self.host, self.port, swarmer_id, debug)
 
         # Basic synchronization is required to kep track of alive/closed sockets.
         self.server_threads = []
