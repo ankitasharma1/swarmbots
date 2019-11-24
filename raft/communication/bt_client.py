@@ -53,9 +53,10 @@ class BT_Client():
             try:
                 self.bt_sock.connect((host, port))
                 break
-            except ConnectionRefusedError:
-                self.debug_print(f"Connection refused by server {host}:{port}, retrying in 5 seconds")
-                sleep(5)
+            except BT.btcommon.BluetoothError:
+                self.debug_print(f"Connection to server {host}:{port} unsuccessful, retrying in 3 seconds")
+                self.bt_sock = BT.BluetoothSocket(BT.RFCOMM) 
+                sleep(3)
         self.connected = True
         self.debug_print(f"Connected to {host} on port {port}")
         return True
@@ -93,15 +94,17 @@ if __name__ == "__main__":
     from SWARMER_ID import SWARMER_ID
 
     # change below if testing client for swarmer2
-    host = SWARMER_ID_DICT["S2"]["ADDR"]
-    port = SWARMER_ID_DICT["S2"]["PORT"]
+    host = SWARMER_ID_DICT["S1"]["ADDR"]
+    port = SWARMER_ID_DICT["S1"]["PORT"]
+    # host = SWARMER_ID_DICT["S2"]["ADDR"]
+    # port = SWARMER_ID_DICT["S2"]["PORT"]
     # host = SWARMER_ID_DICT["S3"]["ADDR"]
     # port = SWARMER_ID_DICT["S3"]["PORT"]
 
     c = BT_Client(SWARMER_ID, debug=True)
     c.connect(host, port)
     start = time()
-    while time() - start < 20:
+    while time() - start < 120:
         print('inside client loop')
         sleep(4)
         c.send(f"hello from {SWARMER_ID} the time is {gmtime()}")
