@@ -105,7 +105,7 @@ class Node():
             q_idx = self.config_dict[server_id]['SHARED_Q_INDEX']
             msg = None
             self.server_lock.acquire()
-            if len(self.incoming_messages[q_index]) > 0:
+            if len(self.incoming_messages[q_idx]) > 0:
                 msg = self.incoming_messages[q_idx].pop(0)
             self.server_lock.release()
             print(f"Received msg from {server_id}: {msg}")
