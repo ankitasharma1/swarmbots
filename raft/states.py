@@ -168,3 +168,6 @@ def candidate_election_reset(node):
         node.send_to([other_id], message.requestVoteMessage(node.swarmer_id, node.term))    
     # Return election results. Return 1 because we vote for ourself.
     return 1
+
+def leader(node):
+    print(f">>> Leader State term: {node.term}")
