@@ -26,6 +26,7 @@ Commands
 EXIT = 'e'
 HELP = 'h'
 STATE = 's'
+TERM = 't'
 
 """
 States
@@ -70,6 +71,8 @@ class Node():
         self.state = JOIN        
         self.term = 0
 
+        self.other_s_ids = list(BT_DICT.keys()).remove(swarmer_id)
+
     def init(self):
         self.service_incoming_conns()
         self.service_outgoing_conns()
@@ -78,12 +81,17 @@ class Node():
             time.sleep(0.05)
             print("Waiting for servers to connect ...")
 
-        states.follower(self)
+        t = Thread(target=self.start_raft)
+        t.setDaemon(True)
+        t.start()
 
         """
         Kick off REPL.
         """
         self.service_repl() 
+
+    def start_raft(self):
+        states.follower(self)
 
     def send_to(self, client_id_list, msg):
         for c_id in client_id_list:
@@ -94,15 +102,13 @@ class Node():
             self.outgoing_messages[shared_q_index].append(msg)
             self.client_lock.release()
 
-    def recv_from(self, server_id_list):
-        for s_id in server_id_list:
-            if s_id == self.swarmer_id:
-                continue
-            q_idx = self.config_dict[s_id]['SHARED_Q_INDEX']
+    def recv_from(self, server_id):
+        if server_id != self.swarmer_id:        
+            q_idx = self.config_dict[server_id]['SHARED_Q_INDEX']
             self.server_lock.acquire()
             msg = self.incoming_messages[q_idx].pop(0)
             self.server_lock.release()
-            # print(f"Received msg from {s_id}: {msg}")
+            print(f"Received msg from {server_id}: {msg}")
             return msg
 
     def service_outgoing_conns(self):
@@ -163,11 +169,13 @@ class Node():
                     print(f"exit: {EXIT}")
                 elif command == STATE:
                     print(self.state)
+                elif command == TERM:
+                    print(self.term)
                 elif command == EXIT:
                     print("Goodbye!")
                     return
                 else:
+                    print(f"Supports {EXIT}, {HELP}, {STATE}, {TERM}")
                     continue
             else:
                 print("Unsupported command. For list of supported commands type 'h'")
-
