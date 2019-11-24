@@ -9,12 +9,11 @@ MSG_SIZE = 1024 # bytes
 RECV_TIMEOUT = 0.5
 
 class BT_Server():
-    def __init__(self, host, port, swarmer_id, uuid, debug=False):
+    def __init__(self, host, port, swarmer_id, debug=False):
         self.bt_sock = BT.BluetoothSocket(BT.RFCOMM)
         self.host = host
         self.port = port
         self.swarmer_id = swarmer_id
-        self.uuid = uuid
         self.debug = debug
         
         self.clients = {}
@@ -33,15 +32,6 @@ class BT_Server():
                 self.debug_print(f"{e}")
                 sleep(5)
 
-        # TODO: do I need this?
-        BT.advertise_service(self.bt_sock,
-                             self.name,
-                             service_id=self.uuid,
-                             service_classes=[
-                                 self.uuid,
-                                 BT.SERIAL_PORT_CLASS],
-                             profiles=[BT.SERIAL_PORT_PROFILE])
-        
         t = Thread(target=self.advertise)
         t.setDaemon(True)
         t.start()
@@ -112,14 +102,13 @@ class BT_Server():
 
 if __name__ == "__main__":
     # testing
-    from SWARMER_BT_INFO import UUID, SWARMER_ID_DICT, SWARMER_ADDR_DICT
+    from SWARMER_BT_INFO import SWARMER_ID_DICT, SWARMER_ADDR_DICT
     from SWARMER_ID import SWARMER_ID
 
     host = SWARMER_ID_DICT[SWARMER_ID]["ADDR"]
     port = SWARMER_ID_DICT[SWARMER_ID]["PORT"]
-    uuid = UUID
 
-    s = BT_Server(host, port, SWARMER_ID, uuid, True)
+    s = BT_Server(host, port, SWARMER_ID, True)
     start = time()
     while time() - start < 60:
         print("Starting to check for messages ...")
