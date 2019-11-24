@@ -74,8 +74,8 @@ class Node():
         self.service_incoming_conns()
         self.service_outgoing_conns()
 
-        while (not self.client_count < 2) or (not len(self.server.clients) < 2):
-            sleep(0.05)
+        while (self.client_count < 2) or (len(self.server.clients) < 2):
+            time.sleep(0.05)
             print("Waiting for servers to connect ...")
 
         states.follower(self)
