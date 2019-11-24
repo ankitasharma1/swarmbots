@@ -4,6 +4,8 @@ from threading import Thread
 import socket
 import time
 
+import states
+
 from communication.server import Server
 from communication.client import Client
 from communication.bt_server import BT_Server
@@ -65,6 +67,9 @@ class Node():
         self.server_lock = threading.Lock()
         self.client_lock = threading.Lock()
 
+        # Raft info
+        self.term = 0
+
 
     def init(self):
         self.service_incoming_conns()
@@ -73,6 +78,8 @@ class Node():
         while (not self.client_count < 2) or (not len(self.server.clients) < 2):
             sleep(0.05)
             print("Waiting for servers to connect ...")
+
+        states.follower(self)
 
         """
         Kick off REPL.
