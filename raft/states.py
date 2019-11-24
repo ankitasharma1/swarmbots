@@ -177,3 +177,32 @@ def candidate_election_reset(node):
 
 def leader(node):
     print(f">>> Leader State term: {node.term}")
+
+    # Update the state.
+    node.state = LEADER 
+
+    # Incoming messages.
+    leader_heartbeat = []
+
+    while True:
+        # Check if we have received any messages.
+        for other_id in node.other_s_ids:
+            msg = node.recv_from(other_id)
+            if msg:
+                msg = message.deserialize(msg)
+                msg_type = msg[message.TYPE]
+                if msg_type == message.LEADER_HEARTBEAT:
+                    leader_hearbeat.append(msg)
+                else:
+                    print(f"Unexpected type: {msg_type}")
+
+        if len(leader_hearbeat) > 0:
+            term = int(response_vote_message[message.CURR_TERM])
+
+            if term > node.term:
+                print(">>> L: correspondance from leader --> follower")                                
+                return follower(node)
+
+        # Send request votes to everyone.    
+        for other_id in node.other_s_ids:
+            node.send_to([other_id], message.leaderHeartBeat(node.id, node.term))    
