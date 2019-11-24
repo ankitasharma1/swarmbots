@@ -93,10 +93,10 @@ if __name__ == "__main__":
     from SWARMER_ID import SWARMER_ID
 
     # change below if testing client for swarmer2
-    host = SWARMER_ID_DICT["S2"]["ADDR"]
-    port = SWARMER_ID_DICT["S2"]["PORT"]
-    # host = SWARMER_ID_DICT["S3"]["ADDR"]
-    # port = SWARMER_ID_DICT["S3"]["PORT"]
+    # host = SWARMER_ID_DICT["S2"]["ADDR"]
+    # port = SWARMER_ID_DICT["S2"]["PORT"]
+    host = SWARMER_ID_DICT["S3"]["ADDR"]
+    port = SWARMER_ID_DICT["S3"]["PORT"]
 
     c = BT_Client(SWARMER_ID, debug=True)
     c.connect(host, port)
