@@ -93,7 +93,7 @@ def serialize(message):
     message.update({PADDING: padding * i})
     # Add padding to the message until it is MESSAGE_SIZE
     # number of bytes.
-    if len(json.loads(message)) == MESSAGE_SIZE:
+    if len(json.dumps(message)) == MESSAGE_SIZE:
       return message
     i = i + 1
 

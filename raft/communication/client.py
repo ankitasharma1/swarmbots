@@ -46,7 +46,8 @@ class Client():
     @failsafe
     def connect(self, host, port):
         self.debug_print(f"Connecting to {host} on port {port} ...")
-        self.host = host
+        #self.host = "localhost"
+        self.host = host        
         self.port = port
         while True:
             try:

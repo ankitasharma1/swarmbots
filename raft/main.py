@@ -10,7 +10,7 @@ if len(sys.argv) != 2:
 # Unique node id.
 node_id = sys.argv[1]
 
-n = Node(node_id)
+n = Node(node_id, wifi=True, debug=False)
 
 # Node 'init' routine.
 n.init()

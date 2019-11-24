@@ -77,7 +77,7 @@ class Node():
 
         while (self.client_count < 2) or (len(self.server.clients) < 2):
             time.sleep(0.05)
-            print("Waiting for servers to connect ...")
+            #print("Waiting for servers to connect ...")
 
         t = Thread(target=self.start_raft)
         t.setDaemon(True)
@@ -107,8 +107,8 @@ class Node():
             self.server_lock.acquire()
             if len(self.incoming_messages[q_idx]) > 0:
                 msg = self.incoming_messages[q_idx].pop(0)
+                print(f"Received msg from {server_id}: {msg}")
             self.server_lock.release()
-            print(f"Received msg from {server_id}: {msg}")
             return msg
 
     def service_outgoing_conns(self):
@@ -139,7 +139,7 @@ class Node():
 
     def handle_incoming_conn(self, server):
         while True:
-            for addr in ALL_ADDRESSES:
+            for addr in list(self.config_dict.keys()):
                 msg = server.recv(addr) # set message size here
                 if msg:
                     s_id = SWARMER_ADDR_DICT[addr]
@@ -150,12 +150,12 @@ class Node():
 
     def handle_outgoing_conn(self, client, addr, port, idx):
         client.connect(addr, port)
-        self.client_count += 1
+        self.client_count += 1        
         while True:
             msg = None
             self.client_lock.acquire()
             if len(self.outgoing_messages[idx]) > 0:
-                msg = self.outgoing_messages.pop(0)
+                msg = self.outgoing_messages[idx].pop(0)
             self.client_lock.release()
             if msg:
                 client.send(msg)
@@ -166,7 +166,8 @@ class Node():
             if len(commands) > 0:
                 command = commands[0]
                 if command == HELP:
-                    print(f"exit: {EXIT}")
+                    print(f"Supports {EXIT}, {HELP}, {STATE}, {TERM}")
+                    continue
                 elif command == STATE:
                     print(self.state)
                 elif command == TERM:

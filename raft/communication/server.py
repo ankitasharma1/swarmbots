@@ -20,7 +20,7 @@ class Server():
         
         while True:
             try:
-                self.sock.bind((host, port))
+                self.sock.bind(('', port))
                 self.sock.listen(1)
                 self.debug_print(f"Listening on {host}:{port} ...")
                 break
