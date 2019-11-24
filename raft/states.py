@@ -1,4 +1,4 @@
-import node
+from node import FOLLOWER, CANDIDATE
 import random
 import time
 import message
@@ -17,7 +17,7 @@ def follower(node):
     print(f">>> Follower State Term: {node.term}")
 
     # Update the state.
-    node.state = node.FOLLOWER
+    node.state = FOLLOWER
 
     random.seed(time.time())
     old_time = time.time()
@@ -76,7 +76,7 @@ def candidate(node):
     print(f">>> Candidate State Term: {node.term}")
 
     # Update the state.
-    node.state = node.Candidate
+    node.state = CANDIDATE
     election_results = candidate_election_reset(node)
 
     random.seed(time.time())
