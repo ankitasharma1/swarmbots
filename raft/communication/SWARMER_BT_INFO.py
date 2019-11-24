@@ -1,15 +1,15 @@
 SWARMER_ID_DICT = {
     "S1": {
         "ADDR": "B8:27:EB:19:6A:75",
-        "PORT": 1
+        "PORT": 11
     },
     "S2": {
         "ADDR": "B8:27:EB:6A:D3:2D",
-        "PORT": 2
+        "PORT": 12
     },
     "S3": {
         "ADDR": "B8:27:EB:0D:A8:B9",
-        "PORT": 3
+        "PORT": 13
     }
 }
 
