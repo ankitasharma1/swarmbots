@@ -1,8 +1,8 @@
 from bluepy.btle import Scanner, DefaultDelegate
 
-from SWARMER_BT_INFO import SWARMER_ID_DICT
+from BT_CONFIG import BT_DICT
 
-s3_addr = SWARMER_ID_DICT["S3"]
+s3_addr = BT_DICT["S3"]
 
 class ScanDelegate(DefaultDelegate):
     def __init__(self):

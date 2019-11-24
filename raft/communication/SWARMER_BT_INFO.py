@@ -1,4 +1,4 @@
-SWARMER_ID_DICT = {
+BT_DICT = {
     "S1": {
         "ADDR": "B8:27:EB:19:6A:75",
         "PORT": 3,

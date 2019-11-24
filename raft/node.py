@@ -10,7 +10,7 @@ from communication.bt_server import BT_Server
 from communication.bt_client import BT_Client
 
 from WIFI_CONFIG import WIFI_DICT
-from communication.SWARMER_BT_INFO import SWARMER_ID_DICT, ALL_ADDRESSES, SWARMER_ADDR_DICT
+from communication.BT_CONFIG import BT_DICT, ALL_ADDRESSES, SWARMER_ADDR_DICT
 
 """
 Cluster Info
@@ -43,7 +43,7 @@ class Node():
         if wifi:
             self.config_dict = WIFI_DICT
         else:
-            self.config_dict = SWARMER_ID_DICT
+            self.config_dict = BT_DICT
 
         self.host = self.config_dict[swarmer_id]["ADDR"]
         self.port = self.config_dict[swarmer_id]["PORT"]
@@ -52,6 +52,8 @@ class Node():
             self.server = Server(self.host, self.port, swarmer_id, debug)
         else:
             self.server = BT_Server(self.host, self.port, swarmer_id, debug)
+
+        self.client_count = 0
 
         # Message queues, needs locking in each server thread
         self.incoming_messages = [[] for _ in range(len(self.config_dict))]
@@ -67,6 +69,10 @@ class Node():
     def init(self):
         self.service_incoming_conns()
         self.service_outgoing_conns()
+
+        while (not self.client_count < 2) or (not len(self.server.clients) < 2):
+            sleep(0.05)
+            print("Waiting for servers to connect ...")
 
         """
         Kick off REPL.
@@ -125,13 +131,14 @@ class Node():
                 msg = server.recv(addr) # set message size here
                 if msg:
                     s_id = SWARMER_ADDR_DICT[addr]
-                    q_idx = SWARMER_ID_DICT[s_id]["SHARED_Q_INDEX"]
+                    q_idx = BT_DICT[s_id]["SHARED_Q_INDEX"]
                     self.server_lock.acquire()
                     self.incoming_messages[q_idx].append(msg)
                     self.server_lock.release()
 
     def handle_outgoing_conn(self, client, addr, port, idx):
         client.connect(addr, port)
+        self.client_count += 1
         while True:
             msg = None
             self.client_lock.acquire()

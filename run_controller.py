@@ -3,7 +3,7 @@
 from communication.controller import Controller
 from communication.connect_to import ConnectToAgent
 from communication.KEYBOARD_CONFIG import KEYBOARD_CONFIG_DICT, DEBOUNCE_INTERVAL
-from communication.SWARMER_BT_INFO import UUID, ALL_ADDRESSES
+from communication.BT_CONFIG import UUID, ALL_ADDRESSES
 
 conn_agents = [ConnectToAgent(addr, UUID) for addr in ALL_ADDRESSES]
 

@@ -1,5 +1,5 @@
 from communication.recv_from import RecvFromAgent
-from communication.SWARMER_BT_INFO import UUID
+from communication.BT_CONFIG import UUID
 
 from motor.motor_driver import MotorDriver
 from motor.MOTOR_CONFIG import THROTTLE, RUN_TIME, MSG_SIZE

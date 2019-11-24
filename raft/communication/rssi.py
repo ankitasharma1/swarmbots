@@ -4,7 +4,7 @@ import struct
 import array
 import fcntl
 
-from SWARMER_BT_INFO import SWARMER_ID_DICT
+from BT_CONFIG import BT_DICT
 
 class BT_RSSI(object):
     def __init__(self):
@@ -15,7 +15,7 @@ class BT_RSSI(object):
 
     def prep_cmd_pkt(self, swarmer_id):
         """Prepare the command packet for requesting RSSI."""
-        addr = SWARMER_ID_DICT[swarmer_id]["ADDR"]
+        addr = BT_DICT[swarmer_id]["ADDR"]
         reqstr = struct.pack(b'6sB17s', 
                              bt.str2ba(addr), 
                              bt.ACL_LINK, 
@@ -29,7 +29,7 @@ class BT_RSSI(object):
         """Connect to the Bluetooth device."""
         bt_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
         bt_sock.settimeout(10)
-        addr = SWARMER_ID_DICT[swarmer_id]["ADDR"]
+        addr = BT_DICT[swarmer_id]["ADDR"]
         bt_sock.connect_ex((addr, 1)) # connect PSM 1 - Service Discovery
         self.bt_socks[swarmer_id] = bt_sock
         return True
