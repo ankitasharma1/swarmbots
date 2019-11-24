@@ -32,9 +32,6 @@ TERM = 't'
 States
 """
 JOIN = 'join'
-FOLLOWER = 'follower'
-CANDIDATE = 'candidate'
-LEADER = 'leader'
 
 class Node():
     def __init__(self, swarmer_id, wifi=False, debug=False):

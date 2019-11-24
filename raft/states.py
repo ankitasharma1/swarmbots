@@ -1,4 +1,3 @@
-from node import FOLLOWER, CANDIDATE
 import random
 import time
 import message
@@ -12,6 +11,13 @@ ELECTION_TIMEOUT = 10
 Cluster details.
 """
 CONFIG_SIZE = 3
+
+"""
+States
+"""
+FOLLOWER = 'follower'
+CANDIDATE = 'candidate'
+LEADER = 'leader'
 
 def follower(node):
     print(f">>> Follower State Term: {node.term}")
