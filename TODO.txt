@@ -1,0 +1,19 @@
+James:
+  1. Setup software on S1
+  2. Upload jearson's pub_key
+  3. Open ssh to jearson
+  4. Finish Server/Client libraries and integrations
+  5. Update bt_client/bt_server 
+  6. Write RSSI code
+  7. Integrate RSSI code
+  8. Architect Line follow safe guard
+  9. Write entrance script in bash
+
+Ankita:
+  1. Test raft on client/server
+  2. Fire on start-up
+  3. Help jearson with opencv stuff
+
+Jearson:
+  1. Install OpenCV on each bot
+  2. Get OpenCV to work?

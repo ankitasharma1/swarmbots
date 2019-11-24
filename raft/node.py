@@ -4,6 +4,11 @@ from threading import Thread
 import socket
 import time
 
+from communication.server import Server
+from communication.client import Client
+
+from WIFI_CONFIG import WIFI_DICT
+
 """
 Cluster Info
 """
@@ -13,9 +18,9 @@ NUM_EXT_CONNS = 2
 """
 Commands
 """
-EXIT = 'exit'
+EXIT = 'e'
 HELP = 'h'
-CLUSTER_INFO = 'c'
+STATE = 's'
 
 """
 States
@@ -26,109 +31,109 @@ CANDIDATE = 'candidate'
 LEADER = 'leader'
 
 class Node():
-    def __init__(self, id, address, port):
-        print("Creating node %d " %(id))
-        self.id = id
-        self.address = address
-        self.port = port
+    def __init__(self, swarmer_id, debug=False):
+        print(f"Creating Node: {swarmer_id}")
+        self.swarmer_id = swarmer_id
         self.state = JOIN
-        self.cluster_info = None
+
+        # server (services incoming connections)
+        self.host = WIFI_DICT[swarmer_id]['address']
+        self.port = WIFI_DICT[swarmer_id]['port']
+        self.debug = debug
+        self.server = Server(self.host, self.port, swarmer_id, debug)
+
         # Basic synchronization is required to kep track of alive/closed sockets.
-        self.sockets_lock = threading.Lock()
-        self.sockets = dict()
+        self.server_threads = []
+        self.client_threads = []
+        self.server_lock = threading.Lock()
+        self.client_lock = threading.Lock()
+
+        # Message queues, needs locking in each server thread
+        self.incoming_messages = [[] for _ in range(len(WIFI_DICT))]
+        self.outgoing_messages = [[] for _ in range(len(WIFI_DICT))]
 
     def init(self):
-        """
-        Waits until the cluster is fully connected to initiate raft.
-        """
-        start_raft_thread = Thread(target=self.start_raft, args=())
-        start_raft_thread.setDaemon(True)
-        start_raft_thread.start()        
-
-        """
-        Kick off serving the remote controller thread.
-        """
-        service_remote_thread = Thread(target=self.service_remote, args=())
-        service_remote_thread.setDaemon(True)
-        service_remote_thread.start()        
-
-        """
-        Kick off serving incoming connections thread.
-        """
-        service_incoming_conns_thread = Thread(target=self.service_incoming_conns, args=())
-        service_incoming_conns_thread.setDaemon(True)
-        service_incoming_conns_thread.start()        
-
-        """
-        Kick off connecting to the rest of the cluster thread.
-        """
-        connect_thread = Thread(target=self.connect, args=())
-        connect_thread.setDaemon(True)
-        connect_thread.start()        
+        self.service_incoming_conns()
+        self.service_outgoing_conns()
 
         """
         Kick off REPL.
         """
         self.service_repl() 
-      
-    def start_raft(self):
-        while True:
-            if len(self.sockets) == NUM_EXT_CONNS:
-                time.sleep(2)
-                print(">> Start RAFT")
-                # TODO: do_follower(self)
-                return
 
-    def service_remote(self):
-        print("Service commands from the remote.")
-        while True:
-            pass
+    def send_to(self, client_id_list, msg):
+        for c_id in client_id_list:
+            if c_id == self.swarmer_id:
+                continue
+            shared_q_index = WIFI_DICT[c_id]['shared_q_index']
+            self.client_lock.acquire()
+            self.outgoing_messages[shared_q_index].append(msg)
+            self.client_lock.release()
 
-    def service_incoming_conns(self):
-        print("Service incoming connections.")
-        s = socket.socket()
-        s.bind(('', self.port))
-        print("Socket binded to %s" %(self.port))
-        # Put the socket into listening mode.
-        s.listen(5)
-        print("Socket is listening")
-        while True:
-            c, addr = s.accept()
-            # Start a thread for each socket.
-            t = Thread(target=self.listen_on_socket, args=(c,))
+    def recv_from(self, server_id_list):
+        for s_id in server_id_list:
+            if s_id == self.swarmer_id:
+                continue
+            shared_q_index = WIFI_DICT[s_id]['shared_q_index']
+            self.server_lock.acquire()
+            msg = self.incoming_messages[shared_q_index].pop(0)
+            self.server_lock.release()
+            print(f"Received msg from {s_id}: {msg}")
+
+    def service_outgoing_conns(self):
+        print("Establishing outgoing connections")
+        for k,v in WIFI_DICT.items():
+            if k == self.swarmer_id:
+                continue
+            c = Client()
+            thread_args = [c, v['address'], v['port'], v['shared_q_index']]
+            t = Thread(target=self.handle_outgoing_conn, args=thread_args)
             t.setDaemon(True)
             t.start()
+            self.client_threads.append(t)
 
-    def connect(self):
-        print("Connect to rest of the cluster.")
+    def service_incoming_conns(self):
+        print("Establishing incoming connections")
+        for k,v in WIFI_DICT.items():
+            if k == self.swarmer_id:
+                continue
+            s = Server(v['address'], v['port'])
+            thread_args = [s, v['shared_q_index']]
+            t = Thread(target=self.handle_incoming_conn, args=thread_args)
+            t.setDaemon(True)
+            t.start()
+            self.server_threads.append(t)
+
+    def handle_incoming_conn(self, server, idx):
+        server.connect(True)
         while True:
-             for id, connection_info in self.cluster_info.items():
-                  if id != self.id: 
-                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-                     try:
-                         s.connect((connection_info[0], connection_info[1]))
-                         self.sockets.update({id: s})
-                         t = Thread(target=self.listen_on_socket, args=(s,))
-                         t.setDaemon(True)
-                         t.start()                
-                         if len(self.sockets) == NUM_EXT_CONNS:
-                              return
-                     except Exception, e:
-                         s.close()
+            msg = server.recv() # set message size here
+            self.server_lock.acquire()
+            self.incoming_messages[idx].append(msg)
+            self.server_lock.release()
+            time.sleep(0.02)
 
-    def listen_on_socket(self, socket):
-        pass
+    def handle_outgoing_conn(self, client, addr, port, idx):
+        client.connect(addr, port, True)
+        while True:
+            msg = None
+            self.client_lock.acquire()
+            if len(self.outgoing_messages[idx]) > 0:
+                msg = self.outgoing_messages.pop(0)
+            self.client_lock.release()
+            if msg:
+                client.send(msg)
+            time.sleep(0.02)
 
     def service_repl(self):
-        print("Service Incoming connections.")
         while True:
             commands = sys.stdin.readline().split()
             if len(commands) > 0:
                 command = commands[0]
                 if command == HELP:
-                    print("exit: %s" %(EXIT))
-                elif command == CLUSTER_INFO:
-                    print(self.cluster_info)
+                    print(f"exit: {EXIT}")
+                elif command == STATE:
+                    print(self.state)
                 elif command == EXIT:
                     print("Goodbye!")
                     return
@@ -136,6 +141,4 @@ class Node():
                     continue
             else:
                 print("Unsupported command. For list of supported commands type 'h'")
-
-
 
