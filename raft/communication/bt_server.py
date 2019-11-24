@@ -19,7 +19,7 @@ class BT_Server():
         self.clients = {}
         self.lock = Lock()
 
-        self.name = SWARMER_ID + " Server"
+        self.name = swarmer_id + " Server"
         
         while True:
             try:
