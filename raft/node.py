@@ -68,7 +68,8 @@ class Node():
         self.state = JOIN        
         self.term = 0
 
-        self.other_s_ids = list(BT_DICT.keys()).remove(swarmer_id)
+        self.other_s_ids = list(BT_DICT.keys())
+        self.other_s_ids.remove(swarmer_id)
 
     def init(self):
         self.service_incoming_conns()
