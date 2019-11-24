@@ -6,12 +6,12 @@ BT_DICT = {
     },
     "S2": {
         "ADDR": "B8:27:EB:6A:D3:2D",
-        "PORT": 4
+        "PORT": 4,
         "SHARED_Q_INDEX": 1
     },
     "S3": {
         "ADDR": "B8:27:EB:0D:A8:B9",
-        "PORT": 5
+        "PORT": 5,
         "SHARED_Q_INDEX": 2
     }
 }

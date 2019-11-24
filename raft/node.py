@@ -39,7 +39,6 @@ class Node():
     def __init__(self, swarmer_id, wifi=False, debug=False):
         print(f"Creating Node: {swarmer_id}")
         self.swarmer_id = swarmer_id
-        self.state = JOIN
         self.debug = debug
         self.wifi = wifi
         if wifi:
@@ -68,8 +67,8 @@ class Node():
         self.client_lock = threading.Lock()
 
         # Raft info
+        self.state = JOIN        
         self.term = 0
-
 
     def init(self):
         self.service_incoming_conns()
