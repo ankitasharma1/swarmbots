@@ -17,7 +17,7 @@ def failsafe(func):
             try:
                 self.bt_sock.close()
                 self.bt_sock = BT.BluetoothSocket(BT.RFCOMM)
-                self.bt_sock.settimeout(self.timeout)
+                # self.bt_sock.settimeout(self.timeout) # is this broken?
                 self.connected = False
                 if self.connect(self.host, self.port):
                     self.debug_print("Reconnect successful, redoing last action")
@@ -39,7 +39,7 @@ class BT_Client():
         self.bt_sock = BT.BluetoothSocket(BT.RFCOMM) 
         self.swarmer_id = swarmer_id
         self.debug = debug
-        self.bt_sock.settimeout(timeout)
+        # self.bt_sock.settimeout(timeout) # is this broken?
         self.connected = False
 
         self.host = None
@@ -93,10 +93,10 @@ if __name__ == "__main__":
     from SWARMER_ID import SWARMER_ID
 
     # change below if testing client for swarmer2
-    # host = SWARMER_ID_DICT["S2"]["ADDR"]
-    # port = SWARMER_ID_DICT["S2"]["PORT"]
-    host = SWARMER_ID_DICT["S3"]["ADDR"]
-    port = SWARMER_ID_DICT["S3"]["PORT"]
+    host = SWARMER_ID_DICT["S2"]["ADDR"]
+    port = SWARMER_ID_DICT["S2"]["PORT"]
+    # host = SWARMER_ID_DICT["S3"]["ADDR"]
+    # port = SWARMER_ID_DICT["S3"]["PORT"]
 
     c = BT_Client(SWARMER_ID, debug=True)
     c.connect(host, port)
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     while time() - start < 20:
         print('inside client loop')
         sleep(4)
-        c.send(f"hello from {SWAMER_ID} the time is {gmtime()}")
+        c.send(f"hello from {SWARMER_ID} the time is {gmtime()}")
         print("checking for messages")
         msg = c.recv()
         if msg:
