@@ -1,17 +1,17 @@
 WIFI_DICT = {
     'S1': {
-        'address': 'localhost',
-        'port': 5000,
-        'shared_q_index': 0
+        'ADDR': 'localhost',
+        'PORT': 5000,
+        'SHARED_Q_INDEX': 0
     },
     'S2': {
-        'address': 'localhost',
-        'port': 6000,
-        'shared_q_index': 1
+        'ADDR': 'localhost',
+        'PORT': 6000,
+        'SHARED_Q_INDEX': 1
     },
     'S3': {
-        'address': 'localhost',
-        'port': 7000,
-        'shared_q_index': 2
+        'ADDR': 'localhost',
+        'PORT': 7000,
+        'SHARED_Q_INDEX': 2
     }
 }

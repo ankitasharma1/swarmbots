@@ -6,7 +6,7 @@ from select import select
 
 PADDING_BTYE = b' '
 MSG_SIZE = 1024 # bytes
-RECV_TIMEOUT = 0.5
+RECV_TIMEOUT = 0.25
 
 class BT_Server():
     def __init__(self, host, port, swarmer_id, debug=False):

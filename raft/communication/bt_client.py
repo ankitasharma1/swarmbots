@@ -5,7 +5,7 @@ from select import select
 # TODO: put MSG_SIZE in global config file
 PADDING_BTYE = b' '
 MSG_SIZE = 1024 # bytes
-RECV_TIMEOUT = 0.5
+RECV_TIMEOUT = 0.25
 
 def failsafe(func):
     def wrapper(*args, **kw_args):

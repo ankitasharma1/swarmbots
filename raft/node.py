@@ -6,8 +6,11 @@ import time
 
 from communication.server import Server
 from communication.client import Client
+from communication.bt_server import BT_Server
+from communication.bt_client import BT_Client
 
 from WIFI_CONFIG import WIFI_DICT
+from communication.SWARMER_BT_INFO import SWARMER_ID_DICT, ALL_ADDRESSES, SWARMER_ADDR_DICT
 
 """
 Cluster Info
@@ -31,26 +34,35 @@ CANDIDATE = 'candidate'
 LEADER = 'leader'
 
 class Node():
-    def __init__(self, swarmer_id, debug=False):
+    def __init__(self, swarmer_id, wifi=False, debug=False):
         print(f"Creating Node: {swarmer_id}")
         self.swarmer_id = swarmer_id
         self.state = JOIN
-
-        # server (services incoming connections)
-        self.host = WIFI_DICT[swarmer_id]['address']
-        self.port = WIFI_DICT[swarmer_id]['port']
         self.debug = debug
-        self.server = Server(self.host, self.port, swarmer_id, debug)
+        self.wifi = wifi
+        if wifi:
+            self.config_dict = WIFI_DICT
+        else:
+            self.config_dict = SWARMER_ID_DICT
+
+        self.host = self.config_dict[swarmer_id]["ADDR"]
+        self.port = self.config_dict[swarmer_id]["PORT"]
+
+        if wifi:
+            self.server = Server(self.host, self.port, swarmer_id, debug)
+        else:
+            self.server = BT_Server(self.host, self.port, swarmer_id, debug)
+
+        # Message queues, needs locking in each server thread
+        self.incoming_messages = [[] for _ in range(len(self.config_dict))]
+        self.outgoing_messages = [[] for _ in range(len(self.config_dict))]
 
         # Basic synchronization is required to kep track of alive/closed sockets.
-        self.server_threads = []
+        self.server_thread = None
         self.client_threads = []
         self.server_lock = threading.Lock()
         self.client_lock = threading.Lock()
 
-        # Message queues, needs locking in each server thread
-        self.incoming_messages = [[] for _ in range(len(WIFI_DICT))]
-        self.outgoing_messages = [[] for _ in range(len(WIFI_DICT))]
 
     def init(self):
         self.service_incoming_conns()
@@ -65,7 +77,7 @@ class Node():
         for c_id in client_id_list:
             if c_id == self.swarmer_id:
                 continue
-            shared_q_index = WIFI_DICT[c_id]['shared_q_index']
+            shared_q_index = self.config_dict[c_id]['SHARED_Q_INDEX']
             self.client_lock.acquire()
             self.outgoing_messages[shared_q_index].append(msg)
             self.client_lock.release()
@@ -74,19 +86,23 @@ class Node():
         for s_id in server_id_list:
             if s_id == self.swarmer_id:
                 continue
-            shared_q_index = WIFI_DICT[s_id]['shared_q_index']
+            q_idx = self.config_dict[s_id]['SHARED_Q_INDEX']
             self.server_lock.acquire()
-            msg = self.incoming_messages[shared_q_index].pop(0)
+            msg = self.incoming_messages[q_idx].pop(0)
             self.server_lock.release()
-            print(f"Received msg from {s_id}: {msg}")
+            # print(f"Received msg from {s_id}: {msg}")
+            return msg
 
     def service_outgoing_conns(self):
         print("Establishing outgoing connections")
-        for k,v in WIFI_DICT.items():
+        for k,v in self.config_dict.items():
             if k == self.swarmer_id:
                 continue
-            c = Client()
-            thread_args = [c, v['address'], v['port'], v['shared_q_index']]
+            if self.wifi:
+                c = Client(k, self.debug)
+            else:
+                c = BT_Client(k, self.debug)
+            thread_args = [c, v['ADDR'], v['PORT'], v['SHARED_Q_INDEX']]
             t = Thread(target=self.handle_outgoing_conn, args=thread_args)
             t.setDaemon(True)
             t.start()
@@ -94,27 +110,28 @@ class Node():
 
     def service_incoming_conns(self):
         print("Establishing incoming connections")
-        for k,v in WIFI_DICT.items():
+        for k,v in self.config_dict.items():
             if k == self.swarmer_id:
                 continue
-            s = Server(v['address'], v['port'])
-            thread_args = [s, v['shared_q_index']]
+            thread_args = [self.server]
             t = Thread(target=self.handle_incoming_conn, args=thread_args)
             t.setDaemon(True)
             t.start()
-            self.server_threads.append(t)
+            self.server_thread = t
 
-    def handle_incoming_conn(self, server, idx):
-        server.connect(True)
+    def handle_incoming_conn(self, server):
         while True:
-            msg = server.recv() # set message size here
-            self.server_lock.acquire()
-            self.incoming_messages[idx].append(msg)
-            self.server_lock.release()
-            time.sleep(0.02)
+            for addr in ALL_ADDRESSES:
+                msg = server.recv(addr) # set message size here
+                if msg:
+                    s_id = SWARMER_ADDR_DICT[addr]
+                    q_idx = SWARMER_ID_DICT[s_id]["SHARED_Q_INDEX"]
+                    self.server_lock.acquire()
+                    self.incoming_messages[q_idx].append(msg)
+                    self.server_lock.release()
 
     def handle_outgoing_conn(self, client, addr, port, idx):
-        client.connect(addr, port, True)
+        client.connect(addr, port)
         while True:
             msg = None
             self.client_lock.acquire()
@@ -123,7 +140,6 @@ class Node():
             self.client_lock.release()
             if msg:
                 client.send(msg)
-            time.sleep(0.02)
 
     def service_repl(self):
         while True:
