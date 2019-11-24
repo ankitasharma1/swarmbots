@@ -14,7 +14,3 @@ n = Node(node_id)
 
 # Node 'init' routine.
 n.init()
-
-sleep(1)
-
-n.send_to(['S1', 'S2', 'S3'], "hello all") 
