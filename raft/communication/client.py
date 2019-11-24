@@ -97,7 +97,7 @@ if __name__ == '__main__':
     while time() - start < 20:
         print('inside client loop')
         sleep(4)
-        c.send("hello, the time is {gmtime()}")
+        c.send(f"hello, the time is {gmtime()}")
         # print(c.recv())
         sleep(1)
     c.clean_up()
