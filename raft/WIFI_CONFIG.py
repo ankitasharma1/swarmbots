@@ -16,10 +16,10 @@ WIFI_DICT = {
     }
 }
 
-SWARMER_ADDR_DICT = {
-    "cslab3a": "S1",
-    "cslab6a": "S2",
-    "cleveland": "S3"
+WIFI_ADDR_DICT = {
+    "10.116.72.111": "S1",
+    "10.116.72.55": "S2",
+    "10.116.74.25": "S3"
 }
 
-ALL_ADDRESSES = list(SWARMER_ADDR_DICT.keys())
+WIFI_ADDRESSES = list(WIFI_ADDR_DICT.keys())

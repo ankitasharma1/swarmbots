@@ -11,8 +11,8 @@ from communication.client import Client
 from communication.bt_server import BT_Server
 from communication.bt_client import BT_Client
 
-from WIFI_CONFIG import WIFI_DICT
-from communication.BT_CONFIG import BT_DICT, ALL_ADDRESSES, SWARMER_ADDR_DICT
+from WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
+from communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT
 
 """
 Cluster Info
@@ -41,8 +41,12 @@ class Node():
         self.wifi = wifi
         if wifi:
             self.config_dict = WIFI_DICT
+            self.all_addresses = WIFI_ADDRESSES
+            self.addr_dict = WIFI_ADDR_DICT
         else:
             self.config_dict = BT_DICT
+            self.all_addresses = BT_ADDRESSES
+            self.addr_dict = BT_ADDR_DICT
 
         self.host = self.config_dict[swarmer_id]["ADDR"]
         self.port = self.config_dict[swarmer_id]["PORT"]
@@ -107,7 +111,7 @@ class Node():
             self.server_lock.acquire()
             if len(self.incoming_messages[q_idx]) > 0:
                 msg = self.incoming_messages[q_idx].pop(0)
-                print(f"Received msg from {server_id}: {msg}")
+                #print(f"Received msg from {server_id}: {msg}")
             self.server_lock.release()
             return msg
 
@@ -139,11 +143,11 @@ class Node():
 
     def handle_incoming_conn(self, server):
         while True:
-            for addr in list(self.config_dict.keys()):
+            for addr in self.all_addresses:
                 msg = server.recv(addr) # set message size here
                 if msg:
-                    s_id = SWARMER_ADDR_DICT[addr]
-                    q_idx = BT_DICT[s_id]["SHARED_Q_INDEX"]
+                    s_id = self.addr_dict[addr]
+                    q_idx = self.config_dict[s_id]["SHARED_Q_INDEX"]
                     self.server_lock.acquire()
                     self.incoming_messages[q_idx].append(msg)
                     self.server_lock.release()
@@ -173,6 +177,7 @@ class Node():
                 elif command == TERM:
                     print(self.term)
                 elif command == EXIT:
+                    self.server.clean_up()
                     print("Goodbye!")
                     return
                 else:
