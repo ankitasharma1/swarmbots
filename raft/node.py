@@ -93,7 +93,7 @@ class Node():
         self.service_repl() 
 
     def start_raft(self):
-        states.follower(self)
+        states.do_raft(self)
 
     def send_to(self, client_id_list, msg):
         for c_id in client_id_list:

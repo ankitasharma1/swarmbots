@@ -19,86 +19,26 @@ FOLLOWER = 'follower'
 CANDIDATE = 'candidate'
 LEADER = 'leader'
 
-def follower(node):
-    print(f">>> Follower State Term: {node.term}")
+def do_raft(node):
+    # Election timeout.
+    random.seed(time.time())
+    old_time = time.time()
+    election_timeout = random.randrange(ELECTION_TIMEOUT)
+    election_results = dict()
 
-    # Update the state.
+    # Incoming messages.
+    request_vote = []
+    leader_heartbeat = []
+    response_vote = []    
+
+    # Starts as a follower.
     node.state = FOLLOWER
 
-    random.seed(time.time())
-    old_time = time.time()
-    election_timeout = random.randrange(ELECTION_TIMEOUT)
-
-    # Incoming messages.
-    request_vote = []
-    leader_heartbeat = []
-
     while True:
         # Check if we have received any messages.
         for other_id in node.other_s_ids:
             msg = node.recv_from(other_id)
             if msg:
-                msg = message.deserialize(msg)
-                msg_type = msg[message.TYPE]
-                if msg_type == message.LEADER_HEARTBEAT:
-                    leader_heartbeat.append(msg)
-                elif msg_type == message.REQUEST_VOTE:
-                    request_vote.append(msg)
-                else:
-                    print(f"Unexpected type: {msg_type}")
-                    
-        # Check whether the election timeout has elapsed.
-        if ((time.time() - old_time) > election_timeout):
-            print(">>> F: no leader --> candidate")
-            return candidate(node)
-        else:
-            # Check if we have correspondance from the leader.
-            if len(leader_heartbeat) > 0:
-                leader_heartbeat_message = leader_heartbeat.pop(0)
-                leader_term = int(leader_heartbeat_message[message.CURR_TERM])
-                if leader_term > node.term:
-                    node.term = leader_term
-                    # Go back to being a follower. Reset the time.
-                    old_time = time.time()
-
-        # If we have received a request vote message.
-        if len(request_vote) > 0:
-            request_vote_message = request_vote.pop(0)
-            candidate_term = int(request_vote_message[message.CURR_TERM])
-            candidate_id = request_vote_message[message.ID]
-
-            if candidate_term < node.term:
-                # Reject the vote.
-                node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, False))
-            else:
-                # Grant the vote.
-                node.term = candidate_term                                  
-                node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, True))
-                # Reset the election.
-                oldtime = time.time()            
-
-def candidate(node):
-    print(f">>> Candidate State Term: {node.term}")
-
-    # Update the state.
-    node.state = CANDIDATE
-    election_results = candidate_election_reset(node)
-
-    random.seed(time.time())
-    old_time = time.time()
-    election_timeout = random.randrange(ELECTION_TIMEOUT)
-    
-    # Incoming messages.
-    request_vote = []
-    leader_heartbeat = []
-    response_vote = []
-
-    while True:
-        # Check if we have received any messages.
-        for other_id in node.other_s_ids:
-            msg = node.recv_from(other_id)
-            if msg:
-                print(msg)
                 msg = message.deserialize(msg)
                 msg_type = msg[message.TYPE]
                 if msg_type == message.LEADER_HEARTBEAT:
@@ -108,28 +48,78 @@ def candidate(node):
                 elif msg_type == message.RESPONSE_VOTE:
                     response_vote.append(msg)
                 else:
-                    print(f"Unexpected type: {msg_type}")
+                    print(f"Unexpected type: {msg_type}")        
 
-        if election_results >= round(CONFIG_SIZE/2):
-            print(f">>> C: Got {election_results} votes --> leader")
-            return leader(node)
-
-        # Check whether the electiontimeout has elapsed.  
-        if ((time.time() - old_time) > election_timeout):
-            # Reset the timer.
-            old_time = time.time()
-            # Start a new election.
-            election_results = candidate_election_reset(node)
+        if node.state == FOLLOWER:
+            follower(node, request_vote, leader_heartbeat, election_timeout, old_time)
+        elif node.state == CANDIDATE:
+            candidate(node, request_vote, leader_heartbeat, response_vote, election_timeout, old_time, election_results)
+        elif node.state == LEADER:
+            pass
         else:
-            # Check if we have correspondance from the leader.
-            if len(leader_heartbeat) > 0:
-                leader_heartbeat_message = leader_heartbeat.pop(0)
-                leader_term = int(leader_heartbeat_message[message.CURR_TERM])
-                if leader_term > node.term:
-                    node.term = leader_term
-                    helper.print_and_flush(">>> C: correspondance from leader --> follower")                                    
-                    # Go back to being a follower. 
-                    return follower(node)
+            print(f"Unknown state {node.state}")
+
+def follower(node, request_vote, leader_heartbeat, election_timeout, old_time):
+    print(f">>> Follower State Term: {node.term}")
+
+    # Check whether the election timeout has elapsed.
+    if ((time.time() - old_time) > election_timeout):
+        print(">>> F: no leader --> candidate")
+        node.state = CANDIDATE
+        return 
+    else:
+        # Check if we have correspondance from the leader.
+        if len(leader_heartbeat) > 0:
+            leader_heartbeat_message = leader_heartbeat.pop(0)
+            leader_term = int(leader_heartbeat_message[message.CURR_TERM])
+            if leader_term >= node.term:
+                node.term = leader_term
+                # Go back to being a follower. Reset the time.
+                old_time = time.time()
+
+    # If we have received a request vote message.
+    if len(request_vote) > 0:
+        request_vote_message = request_vote.pop(0)
+        candidate_term = int(request_vote_message[message.CURR_TERM])
+        candidate_id = request_vote_message[message.ID]
+
+        if candidate_term < node.term:
+            # Reject the vote.
+            node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, False))
+        else:
+            # Grant the vote.
+            node.term = candidate_term                                  
+            node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, True))
+            # Reset the election.
+            oldtime = time.time()            
+
+def candidate(node, request_vote, leader_heartbeat, response_vote, election_timeout, old_time, election_results):
+    print(f">>> Candidate State Term: {node.term}")
+
+    if election_results.get(node.term)
+    election_results = candidate_election_reset(node)
+
+    if election_results >= round(CONFIG_SIZE/2):
+        print(f">>> C: Got {election_results} votes --> leader")
+        return leader(node)
+
+    # Check whether the electiontimeout has elapsed.  
+    if ((time.time() - old_time) > election_timeout):
+        # Reset the timer.
+        old_time = time.time()
+        # Start a new election.
+        election_results = candidate_election_reset(node)
+    else:
+        # Check if we have correspondance from the leader.
+        if len(leader_heartbeat) > 0:
+            leader_heartbeat_message = leader_heartbeat.pop(0)
+            leader_term = int(leader_heartbeat_message[message.CURR_TERM])
+            if leader_term > node.term:
+                node.term = leader_term
+                print(">>> C: correspondance from leader --> follower")                                    
+                # Go back to being a follower. 
+                node.state = FOLLOWER
+                return
 
         # Process competing request vote.
         if len(request_vote) > 0:
