@@ -46,8 +46,7 @@ def follower(node):
                     request_vote.append(msg)
                 else:
                     print(f"Unexpected type: {msg_type}")
-
-
+                    
         # Check whether the election timeout has elapsed.
         if ((time.time() - old_time) > ELECTION_TIMEOUT):
             print(">>> F: no leader --> candidate")

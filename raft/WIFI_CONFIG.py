@@ -1,16 +1,16 @@
 WIFI_DICT = {
     'S1': {
-        'ADDR': 'cslab3a',
+        'ADDR': '10.116.72.111', #cslab3a
         'PORT': 5000,
         'SHARED_Q_INDEX': 0
     },
     'S2': {
-        'ADDR': 'cslab6a',
+        'ADDR': '10.116.72.55', #cslab6a
         'PORT': 6000,
         'SHARED_Q_INDEX': 1
     },
     'S3': {
-        'ADDR': 'cleveland',
+        'ADDR': '10.116.74.25', #cleveland
         'PORT': 7000,
         'SHARED_Q_INDEX': 2
     }

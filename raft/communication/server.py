@@ -43,6 +43,7 @@ class Server():
     def register_client(self, client_conn, client_addr):
         self.lock.acquire()
         self.clients[client_addr] = client_conn
+        print(f"REGISTERED {client_addr}")
         self.lock.release()
     
     def remove_client(self, client_addr):
