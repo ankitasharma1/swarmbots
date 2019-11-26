@@ -6,7 +6,7 @@ from select import select
 
 PADDING_BTYE = b' '
 MSG_SIZE = 1024 # bytes
-RECV_TIMEOUT = 0.5
+RECV_TIMEOUT = .5 
 
 class Server():
     def __init__(self, host, port, swarmer_id, debug=False):
@@ -43,7 +43,6 @@ class Server():
     def register_client(self, client_conn, client_addr):
         self.lock.acquire()
         self.clients[client_addr[0]] = client_conn
-        print(f"REGISTERED {client_addr}")
         self.lock.release()
     
     def remove_client(self, client_addr):

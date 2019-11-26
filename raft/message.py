@@ -89,6 +89,9 @@ def startMessage(id, clusterInfo):
 def serialize(message):
   i = 0
   padding = NOP
+  if len(json.dumps(message)) > MESSAGE_SIZE:
+    print("ERROR: unable to serialize message")
+    return None
   while i < MESSAGE_SIZE:
     message.update({PADDING: padding * i})
     # Add padding to the message until it is MESSAGE_SIZE
@@ -99,4 +102,9 @@ def serialize(message):
 
 # Message to deserialize json to python dict object.
 def deserialize(message):
-  return json.loads(message)
+  try:
+      return json.loads(message)  
+  except Exception as e:
+    print(e)
+    print("{message} dropped")
+    return None
