@@ -33,6 +33,7 @@ class Controller():
         self.left = KEYBOARD_CONFIG_DICT['LEFT']
         self.forward = KEYBOARD_CONFIG_DICT['FORWARD']
         self.backward = KEYBOARD_CONFIG_DICT['BACKWARD']
+        self.exit = KEYBOARD_CONFIG_DICT['EXIT']
 
         # Run the server. It will be connected to by the leader's client
         controller_addr = BT_CONTROLLER_DICT["CONTROLLER"]["ADDR"]
@@ -62,6 +63,10 @@ class Controller():
                     print("\nBackward press detected")
                 self.last_press = time()
                 self.server.send('backward')
+            if keyboard.is_pressed(self.exit) and not self.debounce():
+                if self.debug:
+                    print("\nExit press detected")
+                raise KeyboardInterrupt
 
     @graceful_exit
     def debounce(self):
