@@ -97,7 +97,10 @@ def do_raft(node):
                 request_vote = []
                 leader_heartbeat = []
                 response_vote = []                      
-
+            else:
+                # Chill out if you've been the leader.
+                time.sleep(.2)
+                
             # Continue being a leader.
             leader(node, leader_heartbeat, request_vote)
         else:
