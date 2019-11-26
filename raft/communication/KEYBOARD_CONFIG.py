@@ -4,12 +4,14 @@ FORWARD = "up"
 BACKWARD = "down"
 LEFT = "left"
 RIGHT = "right"
+EXIT = "e"
 
 KEYBOARD_CONFIG_DICT = {
     'FORWARD': FORWARD,
     'BACKWARD': BACKWARD,
     'LEFT': LEFT,
-    'RIGHT': RIGHT
+    'RIGHT': RIGHT,
+    'EXIT': EXIT
 }
 
 # how often should commands be sent from the controller
