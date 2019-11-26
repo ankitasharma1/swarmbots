@@ -16,7 +16,7 @@ class LeaderDriving():
         
         controller_addr = BT_CONTROLLER_DICT["CONTROLLER"]["ADDR"]
         controller_port = BT_CONTROLLER_DICT["CONTROLLER"]["PORT"]
-        client.connect(controller_addr, controller_port)
+        self.client.connect(controller_addr, controller_port)
 
     def drive(self):
         self.on = True
@@ -28,13 +28,13 @@ class LeaderDriving():
         while self.on:
             cmd = self.client.recv(msg_timeout=0.2)
             if cmd == 'forward':
-                md.forward()
+                self.motor.forward()
             if cmd == 'backward':
-                md.backward()
+                self.motor.backward()
             if cmd == 'right':
-                md.right()
+                self.motor.right()
             if cmd == 'left':
-                md.left()
+                self.motor.left()
     
     def stop(self, testing=False):
         # testing allows stopping and starting without killing the conn
