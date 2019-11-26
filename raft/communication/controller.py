@@ -4,6 +4,8 @@ from time import time
 from bt_server import BT_Server
 from KEYBOARD_CONFIG import KEYBOARD_CONFIG_DICT, DEBOUNCE_INTERVAL
 
+from BT_CONFIG import BT_CONTROLLER_DICT
+
 def graceful_exit(func):
     def wrapper(*args, **kw_args):
         try:
@@ -35,7 +37,7 @@ class Controller():
         # Run the server. It will be connected to by the leader's client
         controller_addr = BT_CONTROLLER_DICT["CONTROLLER"]["ADDR"]
         controller_port = BT_CONTROLLER_DICT["CONTROLLER"]["PORT"]
-        self.server = BT_Server(controller_addr, controller_port, debug=debug)
+        self.server = BT_Server(controller_addr, controller_port, "CONTROLLER", debug=debug)
 
     @graceful_exit
     def start(self):
@@ -70,5 +72,5 @@ class Controller():
             return True
 
 if __name__ == '__main__':
-    control = Controller()
-    control.start(True)
+    control = Controller(True)
+    control.start()
