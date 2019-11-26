@@ -14,6 +14,8 @@ from communication.bt_client import BT_Client
 from WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
 from communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT
 
+MSG_SIZE = 1024 # bytes
+
 """
 Cluster Info
 """
@@ -32,6 +34,7 @@ TERM = 't'
 States
 """
 JOIN = 'join'
+import json
 
 class Node():
     def __init__(self, swarmer_id, wifi=False, debug=False):
@@ -69,8 +72,11 @@ class Node():
         self.client_lock = threading.Lock()
 
         # Raft info
-        self.state = JOIN        
+        self.seed = self.config_dict[swarmer_id]["SEED"]
+        self.state = JOIN
+        self.old_state = ""        
         self.term = 0
+        self.voted_for = None
 
         self.other_s_ids = list(BT_DICT.keys())
         self.other_s_ids.remove(swarmer_id)
@@ -117,6 +123,7 @@ class Node():
 
     def service_outgoing_conns(self):
         print("Establishing outgoing connections")
+        print(f"Debug status: {self.debug}")
         for k,v in self.config_dict.items():
             if k == self.swarmer_id:
                 continue
@@ -142,15 +149,59 @@ class Node():
             self.server_thread = t
 
     def handle_incoming_conn(self, server):
+        # Keep track of byte stream for each socket.
+        prev_msg = dict()
+        for addr in self.all_addresses:
+            prev_msg.update({addr: ""})
+        
         while True:
             for addr in self.all_addresses:
+                if addr == self.config_dict[self.swarmer_id]["ADDR"]:
+                    continue
                 msg = server.recv(addr) # set message size here
+                x = msg # debugging purposes
                 if msg:
-                    s_id = self.addr_dict[addr]
-                    q_idx = self.config_dict[s_id]["SHARED_Q_INDEX"]
-                    self.server_lock.acquire()
-                    self.incoming_messages[q_idx].append(msg)
-                    self.server_lock.release()
+                    # Check if all of the bytes have arrived.
+                    if len(msg) != MSG_SIZE:
+                        # Check if a prev message exists.
+                        prev = prev_msg.get(addr)
+                        if len(prev) > 0:
+                            msg = prev + msg
+                            # If all of the bytes have been received, we are done.
+                            if len(msg) == MSG_SIZE:
+                                prev_msg.update({addr: ""})
+                            # Continue what we are doing until all bytes are received.
+                            else:
+                                prev_msg.update({addr: msg})
+                        # We are waiting for subsequent bytes.
+                        else:
+                            prev_msg.update({addr: msg})                    
+    
+                    # Only if the message is 1024 bytes add it to the queue.
+                    if len(msg) == MSG_SIZE:
+                        s_id = self.addr_dict[addr]
+                        q_idx = self.config_dict[s_id]["SHARED_Q_INDEX"]
+                        self.server_lock.acquire()
+                        # This is a bandaid. Idk why we are receiving malformed messages...
+                        if not msg.startswith("{"):
+                            msg = msg.split("{")[1]
+                            msg = "{" + msg
+                        if not msg.endswith("}"):
+                            msg = msg + '"' + "}"
+                        # Sanity check/for debugging purposes since this will happen down the line.
+                        try:
+                          json.loads(msg)  
+                          self.incoming_messages[q_idx].append(msg)
+                        except Exception as e:
+                            print("=============================")                        
+                            print(e)
+                            print(f"{x}")
+                            print("===============")                            
+                            print(f"{msg}")
+                            print("=============================")
+                            # The message is essentially dropped if it can't be properly parsed.
+                        self.server_lock.release()
+
 
     def handle_outgoing_conn(self, client, addr, port, idx):
         client.connect(addr, port)

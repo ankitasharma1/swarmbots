@@ -1,12 +1,13 @@
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR, error
 from time import sleep, time, strftime, gmtime
 from threading import Thread, Lock
 from sys import exit
 from select import select
 
 PADDING_BTYE = b' '
+PADDING_SIZE = 0
 MSG_SIZE = 1024 # bytes
-RECV_TIMEOUT = 0.5
+RECV_TIMEOUT = .5 
 
 class Server():
     def __init__(self, host, port, swarmer_id, debug=False):
@@ -43,7 +44,6 @@ class Server():
     def register_client(self, client_conn, client_addr):
         self.lock.acquire()
         self.clients[client_addr[0]] = client_conn
-        print(f"REGISTERED {client_addr}")
         self.lock.release()
     
     def remove_client(self, client_addr):
@@ -84,6 +84,11 @@ class Server():
                 ready = select([self.clients[client_addr]], [], [], msg_timeout)
                 if ready[0]:
                     data = self.clients[client_addr].recv(msg_size)
+                    # TODO: This is a hack.
+                    if len(data) == PADDING_SIZE:
+                        # Raise socket error.
+                        raise error
+                    self.debug_print(f"Received {data}")
                     return data.decode('utf-8').rstrip()
                 else:
                     return None
@@ -99,6 +104,7 @@ class Server():
             print(time_string + id_string + print_string)
 
     def clean_up(self):
+        self.sock.shutdown(SHUT_RDWR)
         self.sock.close()
 
 if __name__ == '__main__':
