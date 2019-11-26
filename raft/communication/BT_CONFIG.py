@@ -16,10 +16,10 @@ BT_DICT = {
     }
 }
 
-SWARMER_ADDR_DICT = {
+BT_ADDR_DICT = {
     "B8:27:EB:19:6A:75": "S1",
     "B8:27:EB:6A:D3:2D": "S2",
     "B8:27:EB:0D:A8:B9": "S3"
 }
 
-ALL_ADDRESSES = list(SWARMER_ADDR_DICT.keys())
+BT_ADDRESSES = list(BT_ADDR_DICT.keys())
