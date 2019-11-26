@@ -34,6 +34,7 @@ TERM = 't'
 States
 """
 JOIN = 'join'
+import json
 
 class Node():
     def __init__(self, swarmer_id, wifi=False, debug=False):
@@ -74,6 +75,7 @@ class Node():
         self.state = JOIN
         self.old_state = ""        
         self.term = 0
+        self.voted_for = None
 
         self.other_s_ids = list(BT_DICT.keys())
         self.other_s_ids.remove(swarmer_id)
@@ -153,6 +155,7 @@ class Node():
         while True:
             for addr in self.all_addresses:
                 msg = server.recv(addr) # set message size here
+                x = msg # debugging purposes
                 if msg:
                     # Check if all of the bytes have arrived.
                     if len(msg) != MSG_SIZE:
@@ -175,9 +178,25 @@ class Node():
                         s_id = self.addr_dict[addr]
                         q_idx = self.config_dict[s_id]["SHARED_Q_INDEX"]
                         self.server_lock.acquire()
-                        self.incoming_messages[q_idx].append(msg)
+                        # This is a bandaid. Idk why we are receiving malformed messages...
+                        if not msg.startswith("{"):
+                            msg = msg.split("{")[1]
+                            msg = "{" + msg
+                        if not msg.endswith("}"):
+                            msg = msg + '"' + "}"
+                        # Sanity check/for debugging purposes since this will happen down the line.
+                        try:
+                          json.loads(msg)  
+                          self.incoming_messages[q_idx].append(msg)
+                        except Exception as e:
+                            print("=============================")                        
+                            print(e)
+                            print(f"{x}")
+                            print("===============")                            
+                            print(f"{msg}")
+                            print("=============================")
+                            # The message is essentially dropped if it can't be properly parsed.
                         self.server_lock.release()
-                        prev_msg.update({addr: ""})
 
 
     def handle_outgoing_conn(self, client, addr, port, idx):

@@ -5,7 +5,7 @@ import message
 """
 Election details.
 """
-ELECTION_TIMEOUT = 20
+ELECTION_TIMEOUT = 10
 
 """
 Cluster details.
@@ -19,10 +19,11 @@ FOLLOWER = 'follower'
 CANDIDATE = 'candidate'
 LEADER = 'leader'
 
+old_time = time.time()
+    
 def do_raft(node):
     # Election timeout.
     random.seed(time.time())
-    old_time = time.time()
     election_timeout = random.randrange(ELECTION_TIMEOUT)
     election_results = dict()
 
@@ -34,6 +35,8 @@ def do_raft(node):
     # Starts as a follower.
     node.old_state = FOLLOWER
     node.state = FOLLOWER
+    
+    global old_time
 
     while True:
         # Check if we have received any messages.
@@ -52,19 +55,21 @@ def do_raft(node):
                     elif msg_type == message.RESPONSE_VOTE:
                         response_vote.append(msg)
                     else:
-                        print(f"Unexpected type: {msg_type}")        
-
+                        print(f"Unexpected type: {msg_type}")
+        
+        # TODO: clean up election_results for terms < than node.term
+        
         if node.state == FOLLOWER:
             # A new follower.
             if node.old_state != node.state:
-                print("I am now a follower.")
+                print(f"I am now a follower for term {node.term}.")
                 old_time = time.time()
                 
-            follower(node, request_vote, leader_heartbeat, election_timeout, old_time)
+            follower(node, request_vote, leader_heartbeat, election_timeout)
         elif node.state == CANDIDATE:
             # A new candidate.        
             if node.old_state != node.state:
-                print("I am now a candidate.")            
+                print(f"I am now a candidate for term {node.term}.")            
                 # Start the election and send request votes.
                 candidate_election_reset(node)
                 # Grant vote for ourself.
@@ -72,22 +77,23 @@ def do_raft(node):
                 # Reset the time.
                 old_time = time.time()
             
-            candidate(node, request_vote, leader_heartbeat, response_vote, election_timeout, old_time, election_results)
+            candidate(node, request_vote, leader_heartbeat, response_vote, election_timeout, election_results)
         elif node.state == LEADER:
             # A new leader.
             if node.old_state != node.state:
-                print("I am now a leader.")        
+                print(f"I am now a leader for term {node.term}.")        
 
             leader(node, leader_heartbeat, request_vote)
         else:
             print(f"Unknown state {node.state}")
 
-def follower(node, request_vote, leader_heartbeat, election_timeout, old_time):
+def follower(node, request_vote, leader_heartbeat, election_timeout):
     #print(f">>> Follower State Term: {node.term}")
-
+    global old_time
+    
     # Check whether the election timeout has elapsed.
     if ((time.time() - old_time) > election_timeout):
-        print(">>> F: no leader --> candidate")
+        print(f">>> F: no leader --> candidate {time.time()} {old_time}")
         node.old_state = FOLLOWER
         node.state = CANDIDATE
         return 
@@ -100,6 +106,7 @@ def follower(node, request_vote, leader_heartbeat, election_timeout, old_time):
             if leader_term >= node.term:
                 node.term = leader_term
                 # Go back to being a follower. Reset the time.
+                node.voted_for = None
                 old_time = time.time()
 
     # If we have received a request vote message.
@@ -111,9 +118,10 @@ def follower(node, request_vote, leader_heartbeat, election_timeout, old_time):
         if candidate_term < node.term:
             # Reject the vote.
             node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, False))
-        else:
+        elif node.voted_for == None:
             print(f">>> F: Granting vote for {candidate_id}")
             # Grant the vote.
+            node.voted_for = candidate_id
             node.term = candidate_term                                  
             node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, True))
             # Reset the election.
@@ -122,8 +130,10 @@ def follower(node, request_vote, leader_heartbeat, election_timeout, old_time):
     # At this point, our old_state is FOLLOWER.                    
     node.old_state = FOLLOWER                 
 
-def candidate(node, request_vote, leader_heartbeat, response_vote, election_timeout, old_time, election_results):
+def candidate(node, request_vote, leader_heartbeat, response_vote, election_timeout, election_results):
     #print(f">>> Candidate State Term: {node.term}")
+    global old_time
+        
     if election_results.get(node.term) >= round(CONFIG_SIZE/2):
         print(f">>> C: Got {election_results} votes --> leader")
         node.old_state = CANDIDATE
@@ -145,6 +155,7 @@ def candidate(node, request_vote, leader_heartbeat, response_vote, election_time
             leader_term = int(leader_heartbeat_message[message.CURR_TERM])
             if leader_term > node.term:
                 node.term = leader_term
+                node.voted_for = None
                 print(">>> C: correspondance from leader --> follower")                                    
                 # Go back to being a follower. 
                 node.old_state = CANDIDATE
@@ -164,7 +175,8 @@ def candidate(node, request_vote, leader_heartbeat, response_vote, election_time
                 print(f">>> C: Rejecting vote for {candidate_id}")                
             else:
                 # Grant the vote.
-                node.term = candidate_term                  
+                node.term = candidate_term   
+                node.voted_for = candidate_id               
                 node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, True))
                 # Go back to being a follower.
                 node.old_state = CANDIDATE
@@ -195,6 +207,8 @@ def candidate(node, request_vote, leader_heartbeat, response_vote, election_time
 
 
 def candidate_election_reset(node):
+    # Vote for self.
+    node.voted_for = node.swarmer_id
     # Increment term.
     node.term = int(node.term) + 1
     # Send request votes to everyone.    
@@ -217,7 +231,8 @@ def leader(node, leader_heartbeat, request_vote):
         else:
             # Grant the vote.
             print(f">>> L: Granting vote for {candidate_id} with term {candidate_term}")
-            node.term = candidate_term                  
+            node.term = candidate_term
+            node.voted_for = candidate_id                  
             node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, True))
             # Go back to being a follower.
             node.old_state = LEADER
@@ -232,6 +247,7 @@ def leader(node, leader_heartbeat, request_vote):
         if leader_term > node.term:
             print(f">>> L: correspondance from leader with term {leader_term}--> follower") 
             node.term = leader_term  
+            node.voted_for = None
             node.old_state = LEADER
             node.state = FOLLOWER
             return                             

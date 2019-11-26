@@ -106,5 +106,5 @@ def deserialize(message):
       return json.loads(message)  
   except Exception as e:
     print(e)
-    print("{message} dropped")
+    print(f"{message} dropped")
     return None

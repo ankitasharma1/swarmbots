@@ -64,7 +64,7 @@ class Client():
     def send(self, msg):
         byte_msg = msg.encode('utf-8')
         padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
-        self.sock.send(padded_msg)
+        sent_bytes = self.sock.send(padded_msg)
         self.debug_print("Message sent.")
         return True
 
