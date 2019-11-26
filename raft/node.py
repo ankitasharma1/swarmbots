@@ -4,7 +4,7 @@ from threading import Thread
 import socket
 import time
 
-import states
+# import states
 
 from communication.server import Server
 from communication.client import Client
@@ -92,8 +92,8 @@ class Node():
         """
         self.service_repl() 
 
-    def start_raft(self):
-        states.do_raft(self)
+    # def start_raft(self):
+    #    states.do_raft(self)
 
     def send_to(self, client_id_list, msg):
         for c_id in client_id_list:

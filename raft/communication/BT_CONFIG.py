@@ -16,6 +16,13 @@ BT_DICT = {
     }
 }
 
+BT_CONTROLLER_DICT = {
+    "CONTROLLER": {
+        "ADDR": "B8:27:EB:AE:E2:7D",
+        "PORT": 6
+    }
+}
+
 BT_ADDR_DICT = {
     "B8:27:EB:19:6A:75": "S1",
     "B8:27:EB:6A:D3:2D": "S2",

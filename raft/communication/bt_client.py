@@ -17,7 +17,6 @@ def failsafe(func):
             try:
                 self.bt_sock.close()
                 self.bt_sock = BT.BluetoothSocket(BT.RFCOMM)
-                # self.bt_sock.settimeout(self.timeout) # is this broken?
                 self.connected = False
                 if self.connect(self.host, self.port):
                     self.debug_print("Reconnect successful, redoing last action")
@@ -35,11 +34,10 @@ def failsafe(func):
     return wrapper
 
 class BT_Client():
-    def __init__(self, swarmer_id, timeout=5, debug=False):
+    def __init__(self, swarmer_id, debug=False):
         self.bt_sock = BT.BluetoothSocket(BT.RFCOMM) 
         self.swarmer_id = swarmer_id
         self.debug = debug
-        # self.bt_sock.settimeout(timeout) # is this broken?
         self.connected = False
 
         self.host = None

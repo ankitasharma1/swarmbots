@@ -54,7 +54,22 @@ class BT_Server():
         self.clients.pop(client_addr, None)
         self.lock.release()
     
-    def send(self, client_addr, msg):
+    # TODO: update calls after merge!!!
+    def send(self, msg, client_addr="any"):
+        if client_addr == "any":
+            for addr,client in self.clients.items():
+                try:
+                    byte_msg = msg.encode('utf-8')
+                    padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
+                    client.send(padded_msg)
+                    self.debug_print("Message sent.")
+                    return True
+                except Exception as e:
+                    self.debug_print("Error sending message")
+                    self.debug_print(f"{e}")
+                    self.remove_client(addr)
+                    return False
+                
         if not client_addr in self.clients:
             self.debug_print(f"Error sending message, {client_addr} not in clients dict")
             return False
