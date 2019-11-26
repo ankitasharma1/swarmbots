@@ -36,6 +36,26 @@ class LeaderDriving():
             if cmd == 'left':
                 md.left()
     
-    def stop(self):
+    def stop(self, testing=False):
+        # testing allows stopping and starting without killing the conn
         self.on = False
-        self.client.clean_up()
+        if not testing:
+            self.client.clean_up()
+
+if __name__ == '__main__':
+    from time import sleep
+    
+    l = LeaderDriving(True)
+    print("driving")
+    l.drive()
+    sleep(120)
+    print("stopping for testing")
+    l.stop(True)
+    sleep(20)
+    print("driving")
+    l.drive()
+    sleep(60)
+    print("stopping and cleaning up")
+    l.stop()
+    print("goodbye")
+
