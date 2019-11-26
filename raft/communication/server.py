@@ -83,6 +83,7 @@ class Server():
                 ready = select([self.clients[client_addr]], [], [], msg_timeout)
                 if ready[0]:
                     data = self.clients[client_addr].recv(msg_size)
+                    self.debug_print(f"Received {data}")
                     return data.decode('utf-8').rstrip()
                 else:
                     return None
@@ -98,6 +99,7 @@ class Server():
             print(time_string + id_string + print_string)
 
     def clean_up(self):
+        self.sock.shutdown(SHUT_RDWR)
         self.sock.close()
 
 if __name__ == '__main__':

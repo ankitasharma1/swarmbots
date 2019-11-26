@@ -72,6 +72,7 @@ class Node():
         self.client_lock = threading.Lock()
 
         # Raft info
+        self.seed = self.config_dict[swarmer_id]["SEED"]
         self.state = JOIN
         self.old_state = ""        
         self.term = 0
@@ -122,6 +123,7 @@ class Node():
 
     def service_outgoing_conns(self):
         print("Establishing outgoing connections")
+        print(f"Debug status: {self.debug}")
         for k,v in self.config_dict.items():
             if k == self.swarmer_id:
                 continue
@@ -154,6 +156,8 @@ class Node():
         
         while True:
             for addr in self.all_addresses:
+                if addr == self.config_dict[self.swarmer_id]["ADDR"]:
+                    continue
                 msg = server.recv(addr) # set message size here
                 x = msg # debugging purposes
                 if msg:

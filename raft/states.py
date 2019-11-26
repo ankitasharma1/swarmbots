@@ -23,8 +23,9 @@ old_time = time.time()
     
 def do_raft(node):
     # Election timeout.
-    random.seed(time.time())
+    random.seed(node.seed)
     election_timeout = random.randrange(ELECTION_TIMEOUT)
+    print(election_timeout)
     election_results = dict()
 
     # Incoming messages.
@@ -63,13 +64,22 @@ def do_raft(node):
             # A new follower.
             if node.old_state != node.state:
                 print(f"I am now a follower for term {node.term}.")
+                # Clear queues if we are transitioning to a new state.
+                request_vote = []
+                leader_heartbeat = []
+                response_vote = []    
                 old_time = time.time()
-                
+            
+            # Continue being a follower.
             follower(node, request_vote, leader_heartbeat, election_timeout)
         elif node.state == CANDIDATE:
             # A new candidate.        
             if node.old_state != node.state:
-                print(f"I am now a candidate for term {node.term}.")            
+                print(f"I am now a candidate for term {node.term}.") 
+                # Clear queues if we are transitioning to a new state.
+                request_vote = []
+                leader_heartbeat = []
+                response_vote = []                               
                 # Start the election and send request votes.
                 candidate_election_reset(node)
                 # Grant vote for ourself.
@@ -77,12 +87,18 @@ def do_raft(node):
                 # Reset the time.
                 old_time = time.time()
             
+            # Continue being a candidate.
             candidate(node, request_vote, leader_heartbeat, response_vote, election_timeout, election_results)
         elif node.state == LEADER:
             # A new leader.
             if node.old_state != node.state:
-                print(f"I am now a leader for term {node.term}.")        
+                print(f"I am now a leader for term {node.term}.")  
+                # Clear queues if we are transitioning to a new state.
+                request_vote = []
+                leader_heartbeat = []
+                response_vote = []                      
 
+            # Continue being a leader.
             leader(node, leader_heartbeat, request_vote)
         else:
             print(f"Unknown state {node.state}")

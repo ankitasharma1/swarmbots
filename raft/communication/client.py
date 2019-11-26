@@ -3,6 +3,7 @@ from time import sleep, gmtime, strftime, time
 
 PADDING_BTYE = b' '
 MSG_SIZE = 1024 # bytes
+RECV_TIMEOUT = .5 
 
 def failsafe(func):
     def wrapper(*args, **kw_args):
@@ -14,7 +15,6 @@ def failsafe(func):
             try:
                 self.sock.close()
                 self.sock = socket(AF_INET, SOCK_STREAM)
-                self.sock.settimeout(self.timeout)
                 self.connected = False
                 if self.connect(self.host, self.port):
                     self.debug_print("Reconnect successful, redoing last action")
@@ -40,8 +40,6 @@ class Client():
         self.swarmer_id = swarmer_id
         self.timeout = timeout
         self.debug = debug
-
-        self.sock.settimeout(timeout)
 
     @failsafe
     def connect(self, host, port):
@@ -69,16 +67,14 @@ class Client():
         return True
 
     @failsafe
-    def recv(self, msg_size=MSG_SIZE):
-        while True:
-            data = self.sock.recv(msg_size)
-            if data:
-                msg = data.decode('utf-8').rstrip()
-                if msg == 'who are you?':
-                    self.send(self.swarmer_id)
-                    return 'sent swarmer id to server'
-                else:
-                    return msg
+    def recv(self, msg_timeout=RECV_TIMEOUT, msg_size=MSG_SIZE):
+        ready = select(self.sock, [], [], msg_timeout)
+        if ready[0]:
+            data = self.clients[client_addr].recv(msg_size)
+            self.debug_print(f"Received {data}")
+            return data.decode('utf-8').rstrip()
+        else:
+            return None
 
     def debug_print(self, print_string):
         if self.debug:
