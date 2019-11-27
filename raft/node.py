@@ -1,42 +1,29 @@
 import sys
-import threading
-from threading import Thread
-import socket
+from threading import Thread, Lock
 import time
+import json
 
-# import states
+from states import do_raft
 
 from communication.server import Server
 from communication.client import Client
 from communication.bt_server import BT_Server
 from communication.bt_client import BT_Client
 
-from WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
+from communication.WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
 from communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT
-
-MSG_SIZE = 1024 # bytes
-
-"""
-Cluster Info
-"""
-CLUSTER_SIZE = 3
-NUM_EXT_CONNS = 2
+from communication.MSG_CONFIG import MSG_SIZE
 
 """
-Commands
+REPL Commands
 """
 EXIT = 'e'
 HELP = 'h'
 STATE = 's'
 TERM = 't'
 
-"""
-States
-"""
-JOIN = 'join'
-import json
 
-class Node():
+class Node:
     def __init__(self, swarmer_id, wifi=False, debug=False):
         print(f"Creating Node: {swarmer_id}")
         self.swarmer_id = swarmer_id
@@ -65,15 +52,15 @@ class Node():
         self.incoming_messages = [[] for _ in range(len(self.config_dict))]
         self.outgoing_messages = [[] for _ in range(len(self.config_dict))]
 
-        # Basic synchronization is required to kep track of alive/closed sockets.
+        # Basic synchronization is required to keep track of alive/closed sockets.
         self.server_thread = None
         self.client_threads = []
-        self.server_lock = threading.Lock()
-        self.client_lock = threading.Lock()
+        self.server_lock = Lock()
+        self.client_lock = Lock()
 
         # Raft info
         self.seed = self.config_dict[swarmer_id]["SEED"]
-        self.state = JOIN
+        self.state = 'join'
         self.old_state = ""        
         self.term = 0
         self.voted_for = None
@@ -87,19 +74,15 @@ class Node():
 
         while (self.client_count < 2) or (len(self.server.clients) < 2):
             time.sleep(0.05)
-            #print("Waiting for servers to connect ...")
 
         t = Thread(target=self.start_raft)
         t.setDaemon(True)
         t.start()
 
-        """
-        Kick off REPL.
-        """
-        self.service_repl() 
+        self.service_repl()
 
-    # def start_raft(self):
-    #    states.do_raft(self)
+    def start_raft(self):
+        do_raft(self)
 
     def send_to(self, client_id_list, msg):
         for c_id in client_id_list:
@@ -117,7 +100,7 @@ class Node():
             self.server_lock.acquire()
             if len(self.incoming_messages[q_idx]) > 0:
                 msg = self.incoming_messages[q_idx].pop(0)
-                #print(f"Received msg from {server_id}: {msg}")
+                # print(f"Received msg from {server_id}: {msg}")
             self.server_lock.release()
             return msg
 
@@ -201,7 +184,6 @@ class Node():
                             print("=============================")
                             # The message is essentially dropped if it can't be properly parsed.
                         self.server_lock.release()
-
 
     def handle_outgoing_conn(self, client, addr, port, idx):
         client.connect(addr, port)

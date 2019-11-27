@@ -1,9 +1,9 @@
 from socket import socket, AF_INET, SOCK_STREAM
 from time import sleep, gmtime, strftime, time
+from select import select
 
-PADDING_BTYE = b' '
-MSG_SIZE = 1024 # bytes
-RECV_TIMEOUT = .5 
+from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+
 
 def failsafe(func):
     def wrapper(*args, **kw_args):
@@ -31,7 +31,8 @@ def failsafe(func):
                 return
     return wrapper
 
-class Client():
+
+class Client:
     def __init__(self, swarmer_id, debug=False, timeout=5):
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.connected = False
@@ -44,8 +45,7 @@ class Client():
     @failsafe
     def connect(self, host, port):
         self.debug_print(f"Connecting to {host} on port {port} ...")
-        #self.host = "localhost"
-        self.host = host        
+        self.host = host
         self.port = port
         while True:
             try:
@@ -62,7 +62,7 @@ class Client():
     def send(self, msg):
         byte_msg = msg.encode('utf-8')
         padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
-        sent_bytes = self.sock.send(padded_msg)
+        self.sock.send(padded_msg)
         self.debug_print("Message sent.")
         return True
 
@@ -70,7 +70,7 @@ class Client():
     def recv(self, msg_timeout=RECV_TIMEOUT, msg_size=MSG_SIZE):
         ready = select(self.sock, [], [], msg_timeout)
         if ready[0]:
-            data = self.clients[client_addr].recv(msg_size)
+            data = self.sock.recv(msg_size)
             self.debug_print(f"Received {data}")
             return data.decode('utf-8').rstrip()
         else:
@@ -84,6 +84,7 @@ class Client():
 
     def clean_up(self):
         self.sock.close()
+
 
 if __name__ == '__main__':
     host = 'localhost'

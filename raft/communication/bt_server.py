@@ -1,14 +1,12 @@
 import bluetooth as BT
 from time import sleep, time, strftime, gmtime
 from threading import Thread, Lock
-from sys import exit
 from select import select
 
-PADDING_BTYE = b' '
-MSG_SIZE = 1024 # bytes
-RECV_TIMEOUT = 0.25
+from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 
-class BT_Server():
+
+class BT_Server:
     def __init__(self, host, port, swarmer_id, debug=False):
         self.bt_sock = BT.BluetoothSocket(BT.RFCOMM)
         self.host = host
@@ -70,7 +68,7 @@ class BT_Server():
                     self.remove_client(addr)
                     return False
                 
-        if not client_addr in self.clients:
+        if client_addr not in self.clients:
             self.debug_print(f"Error sending message, {client_addr} not in clients dict")
             return False
         else:
@@ -90,7 +88,7 @@ class BT_Server():
         return list(self.clients.keys())
     
     def recv(self, client_addr, msg_timeout=RECV_TIMEOUT, msg_size=MSG_SIZE):
-        if not client_addr in self.clients:
+        if client_addr not in self.clients:
             self.debug_print(f"Error receiving message, {client_addr} not in clients dict")
             return None
         else:
@@ -115,20 +113,21 @@ class BT_Server():
     def clean_up(self):
         self.bt_sock.close()
 
+
 if __name__ == "__main__":
     # testing
-    from BT_CONFIG import BT_DICT, SWARMER_ADDR_DICT
+    from BT_CONFIG import BT_DICT
     from SWARMER_ID import SWARMER_ID
 
     host = BT_DICT[SWARMER_ID]["ADDR"]
     port = BT_DICT[SWARMER_ID]["PORT"]
 
-    s = BT_Server(host, port, SWARMER_ID, True)
+    s = BluetoothServer(host, port, SWARMER_ID, True)
     start = time()
     while time() - start < 60:
         print("Starting to check for messages ...")
         for c in s.client_addresses():
-            if not c in s.clients:
+            if c not in s.clients:
                 print(f"{c} not connected")
             else:
                 print(f"Checking for messages from {c}")

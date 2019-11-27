@@ -1,26 +1,14 @@
 import random
 import time
-import message
 
-"""
-Election details.
-"""
-ELECTION_TIMEOUT = 10
+import communication.message as message
+from communication.MSG_CONFIG import REQUEST_VOTE, RESPONSE_VOTE, LEADER_HEARTBEAT
 
-"""
-Cluster details.
-"""
-CONFIG_SIZE = 3
-
-"""
-States
-"""
-FOLLOWER = 'follower'
-CANDIDATE = 'candidate'
-LEADER = 'leader'
+from RAFT_CONFIG import CLUSTER_SIZE, FOLLOWER, CANDIDATE, LEADER, ELECTION_TIMEOUT
 
 old_time = time.time()
-    
+
+
 def do_raft(node):
     # Election timeout.
     random.seed(node.seed)
@@ -48,12 +36,12 @@ def do_raft(node):
                 msg = message.deserialize(msg)
                 if msg:
                     # Check the message type.
-                    msg_type = msg[message.TYPE]
-                    if msg_type == message.LEADER_HEARTBEAT:
+                    msg_type = msg['type']
+                    if msg_type == LEADER_HEARTBEAT:
                         leader_heartbeat.append(msg)
-                    elif msg_type == message.REQUEST_VOTE:
+                    elif msg_type == REQUEST_VOTE:
                         request_vote.append(msg)
-                    elif msg_type == message.RESPONSE_VOTE:
+                    elif msg_type == RESPONSE_VOTE:
                         response_vote.append(msg)
                     else:
                         print(f"Unexpected type: {msg_type}")
@@ -106,12 +94,13 @@ def do_raft(node):
         else:
             print(f"Unknown state {node.state}")
 
+
 def follower(node, request_vote, leader_heartbeat, election_timeout):
     #print(f">>> Follower State Term: {node.term}")
     global old_time
     
     # Check whether the election timeout has elapsed.
-    if ((time.time() - old_time) > election_timeout):
+    if (time.time() - old_time) > election_timeout:
         print(f">>> F: no leader --> candidate {time.time()} {old_time}")
         node.old_state = FOLLOWER
         node.state = CANDIDATE
@@ -136,13 +125,13 @@ def follower(node, request_vote, leader_heartbeat, election_timeout):
 
         if candidate_term < node.term:
             # Reject the vote.
-            node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, False))
+            node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, False))
         elif node.voted_for == None:
             print(f">>> F: Granting vote for {candidate_id}")
             # Grant the vote.
             node.voted_for = candidate_id
             node.term = candidate_term                                  
-            node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, True))
+            node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, True))
             # Reset the election.
             oldtime = time.time()  
 
@@ -153,7 +142,7 @@ def candidate(node, request_vote, leader_heartbeat, response_vote, election_time
     #print(f">>> Candidate State Term: {node.term}")
     global old_time
         
-    if election_results.get(node.term) >= round(CONFIG_SIZE/2):
+    if election_results.get(node.term) >= round(CLUSTER_SIZE / 2):
         print(f">>> C: Got {election_results} votes --> leader")
         node.old_state = CANDIDATE
         node.state = LEADER
@@ -190,13 +179,13 @@ def candidate(node, request_vote, leader_heartbeat, response_vote, election_time
 
             if candidate_term < node.term:
                 # Reject the vote.
-                node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, False))
+                node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, False))
                 print(f">>> C: Rejecting vote for {candidate_id}")                
             else:
                 # Grant the vote.
                 node.term = candidate_term   
                 node.voted_for = candidate_id               
-                node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, True))
+                node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, True))
                 # Go back to being a follower.
                 node.old_state = CANDIDATE
                 node.state = FOLLOWER
@@ -232,7 +221,7 @@ def candidate_election_reset(node):
     node.term = int(node.term) + 1
     # Send request votes to everyone.    
     for other_id in node.other_s_ids:
-        node.send_to([other_id], message.requestVoteMessage(node.swarmer_id, node.term))    
+        node.send_to([other_id], message.request_vote_msg(node.swarmer_id, node.term))
 
 def leader(node, leader_heartbeat, request_vote):
     #print(f">>> Leader State term: {node.term}")
@@ -246,13 +235,13 @@ def leader(node, leader_heartbeat, request_vote):
 
         if candidate_term < node.term:
             # Reject the vote.
-            node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, False))
+            node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, False))
         else:
             # Grant the vote.
             print(f">>> L: Granting vote for {candidate_id} with term {candidate_term}")
             node.term = candidate_term
             node.voted_for = candidate_id                  
-            node.send_to([candidate_id], message.responseVoteMessage(node.swarmer_id, node.term, True))
+            node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, True))
             # Go back to being a follower.
             node.old_state = LEADER
             node.state = FOLLOWER
@@ -273,7 +262,7 @@ def leader(node, leader_heartbeat, request_vote):
 
     # Send leader heartbeats to everyone.    
     for other_id in node.other_s_ids:
-        node.send_to([other_id], message.leaderHeartBeat(node.swarmer_id, node.term)) 
+        node.send_to([other_id], message.leader_heartbeat_msg(node.swarmer_id, node.term))
         
     # At this point, our old_state is LEADER.                    
     node.old_state = LEADER                    

@@ -1,5 +1,4 @@
 import sys
-from time import sleep
 from node import Node
 
 # Check command line arguments.

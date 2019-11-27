@@ -2,10 +2,8 @@ import bluetooth as BT
 from time import sleep, gmtime, strftime, time
 from select import select
 
-# TODO: put MSG_SIZE in global config file
-PADDING_BTYE = b' '
-MSG_SIZE = 1024 # bytes
-RECV_TIMEOUT = 0.25
+from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+
 
 def failsafe(func):
     def wrapper(*args, **kw_args):
@@ -33,7 +31,8 @@ def failsafe(func):
                 return
     return wrapper
 
-class BT_Client():
+
+class BT_Client:
     def __init__(self, swarmer_id, debug=False):
         self.bt_sock = BT.BluetoothSocket(BT.RFCOMM) 
         self.swarmer_id = swarmer_id
@@ -86,9 +85,10 @@ class BT_Client():
         self.bt_sock.close()
         self.connected = False
 
+
 if __name__ == "__main__":
     # testing
-    from BT_CONFIG import UUID, BT_DICT, SWARMER_ADDR_DICT
+    from BT_CONFIG import BT_DICT
     from SWARMER_ID import SWARMER_ID
 
     # change below if testing client for swarmer2
