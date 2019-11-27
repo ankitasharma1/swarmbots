@@ -1,4 +1,3 @@
-from time import sleep
 from adafruit_motorkit import MotorKit
 
 def failsafe(func):
@@ -13,45 +12,49 @@ def failsafe(func):
     return wrapper
 
 class MotorDriver():
-    def __init__(self, throttle, run_time):
+    def __init__(self, throttle):
         self.kit = MotorKit()
         self.throttle = throttle
-        self.run_time = run_time
 
     @failsafe
     def right(self):
         self.kit.motor1.throttle = self.throttle
-        sleep(self.run_time)
         self.kit.motor1.throttle = 0
 
     @failsafe
     def left(self):
         self.kit.motor2.throttle = self.throttle
-        sleep(self.run_time)
         self.kit.motor2.throttle = 0
 
     @failsafe
     def forward(self):
         self.kit.motor1.throttle = self.throttle
         self.kit.motor2.throttle = self.throttle
-        sleep(self.run_time)
-        self.kit.motor1.throttle = 0
-        self.kit.motor2.throttle = 0
 
     @failsafe
     def backward(self):
         self.kit.motor1.throttle = -1 * self.throttle
         self.kit.motor2.throttle = -1 * self.throttle
-        sleep(self.run_time)
+
+    @failsafe
+    def stop(self):
         self.kit.motor1.throttle = 0
         self.kit.motor2.throttle = 0
    
 
 if __name__ == '__main__':
     from MOTOR_CONFIG import THROTTLE, RUN_TIME
+    from time import sleep
+   
+    # test
+    md = MotorDriver(THROTTLE)
     
-    md = MotorDriver(THROTTLE, RUN_TIME)
     md.right()
+    sleep(0.5)
     md.left()
+    sleep(0.5)
     md.forward()
+    sleep(0.5)
     md.backward()
+    sleep(0.5)
+    md.stop()

@@ -11,12 +11,14 @@ from motor.MOTOR_CONFIG import THROTTLE, RUN_TIME, MSG_SIZE
 # the controller
 class LeaderDriving():
     def __init__(self, debug=False):
-        self.motor = MotorDriver(THROTTLE, RUN_TIME)
+        self.motor = MotorDriver(THROTTLE)
         self.client = BT_Client(SWARMER_ID, debug) 
         
         controller_addr = BT_CONTROLLER_DICT["CONTROLLER"]["ADDR"]
         controller_port = BT_CONTROLLER_DICT["CONTROLLER"]["PORT"]
         self.client.connect(controller_addr, controller_port)
+
+        self.on = False
 
     def drive(self):
         self.on = True
@@ -27,6 +29,8 @@ class LeaderDriving():
     def _drive(self):
         while self.on:
             cmd = self.client.recv(msg_timeout=0.2)
+            if not cmd:
+                self.motor.stop()
             if cmd == 'forward':
                 self.motor.forward()
             if cmd == 'backward':
@@ -38,9 +42,17 @@ class LeaderDriving():
     
     def stop(self, testing=False):
         # testing allows stopping and starting without killing the conn
+        self.motor.stop()
         self.on = False
         if not testing:
             self.client.clean_up()
+    
+    def debounce(self):
+        elapsed_time = time() - self.last_press
+        if elapsed_time > RUN_TIME:
+            return False
+        else:
+            return True
 
 if __name__ == '__main__':
     from time import sleep
