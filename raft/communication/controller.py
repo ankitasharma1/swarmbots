@@ -77,5 +77,5 @@ class Controller():
             return True
 
 if __name__ == '__main__':
-    control = Controller(True)
+    control = Controller()
     control.start()
