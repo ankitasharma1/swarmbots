@@ -6,10 +6,10 @@ __TODO:__
 * [JR] Implement `follower_drive`
 * [JR] Implement on-start-up scripts
 * [JR + AS] Implement `main.py` to tie everything together
-* [AS] Clean up `raft`, allowing it to be passed BT channels
-* [JR] Put together swarmer3
-* [JA] Figure out how to mount the camera to a robot
-* [JR] Put together controller hardware
+* [AS] ~~Clean up `raft`, allowing it to be passed BT channels~~
+* [JR] ~~Put together swarmer3~~
+* [JA] ~~Figure out how to mount the camera to a robot~~
+* [JR] ~~Put together controller hardware~~
 * [JR] Write start-up scripts for controller
 * [\*] Write Usage Section
 * [\*] Write Hardware Section
