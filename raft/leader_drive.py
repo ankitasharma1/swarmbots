@@ -1,4 +1,5 @@
 from threading import Thread, Lock
+from time import time, sleep
 
 from communication.bt_client import BT_Client
 from communication.BT_CONFIG import BT_ADDR_DICT, BT_CONTROLLER_DICT
@@ -18,6 +19,7 @@ class LeaderDriving():
         controller_port = BT_CONTROLLER_DICT["CONTROLLER"]["PORT"]
         self.client.connect(controller_addr, controller_port)
 
+        self.last_press = 0.0
         self.on = False
 
     def drive(self):
@@ -28,22 +30,26 @@ class LeaderDriving():
 
     def _drive(self):
         while self.on:
-            cmd = self.client.recv(msg_timeout=0.2)
-            if not cmd:
-                self.motor.stop()
-            if cmd == 'forward':
-                self.motor.forward()
-            if cmd == 'backward':
-                self.motor.backward()
-            if cmd == 'right':
-                self.motor.right()
-            if cmd == 'left':
-                self.motor.left()
+            cmd = self.client.recv(msg_timeout=0.15)
+            if not self.debounce():
+                if cmd == None: # this has to be None else it will match b' '
+                    self.motor.stop()
+                if cmd == 'forward':
+                    self.motor.forward()
+                if cmd == 'backward':
+                    self.motor.backward()
+                if cmd == 'right':
+                    self.motor.right()
+                if cmd == 'left':
+                    self.motor.left()
+                self.last_press = time()
+                print(f"Command {cmd}")
     
     def stop(self, testing=False):
         # testing allows stopping and starting without killing the conn
-        self.motor.stop()
         self.on = False
+        sleep(0.15)
+        self.motor.stop()
         if not testing:
             self.client.clean_up()
     
@@ -60,7 +66,7 @@ if __name__ == '__main__':
     l = LeaderDriving(True)
     print("driving")
     l.drive()
-    sleep(120)
+    sleep(60)
     print("stopping for testing")
     l.stop(True)
     sleep(20)
