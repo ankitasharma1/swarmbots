@@ -40,7 +40,7 @@ class BT_Server:
             client_conn, client_info = self.bt_sock.accept()
             self.register_client(client_conn, client_info[0])
             self.debug_print(f"Connected to {client_info[0]}")
-            # print(f"Connected to {self.client_info[0]} on port {self.client_info[1]}")
+            print(f">>> Connected to {client_info[0]}:{client_info[1]}")
 
     def register_client(self, client_conn, client_addr):
         self.lock.acquire()
