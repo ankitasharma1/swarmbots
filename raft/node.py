@@ -1,7 +1,6 @@
 import sys
 from threading import Thread, Lock
 import time
-import json
 
 from states import do_raft
 
@@ -12,7 +11,6 @@ from communication.bt_client import BT_Client
 
 from communication.WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
 from communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT
-from communication.MSG_CONFIG import MSG_SIZE
 
 from communication.message import deserialize
 
@@ -92,6 +90,7 @@ class Node:
                 continue
             shared_q_index = self.config_dict[c_id]['SHARED_Q_INDEX']
             self.client_lock.acquire()
+            print(f">>> Qeueing {msg} to send to {c_id}")
             self.outgoing_messages[shared_q_index].append(msg)
             self.client_lock.release()
 

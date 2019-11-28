@@ -217,9 +217,9 @@ def candidate_election_reset(node):
     node.voted_for = node.swarmer_id
     # Increment term.
     node.term = int(node.term) + 1
-    # Send request votes to everyone.    
-    for other_id in node.other_s_ids:
-        node.send_to([other_id], request_vote_msg(node.swarmer_id, node.term))
+    # Send request votes to everyone.
+    print(f">>> Sending requests for votes to {node.other_s_ids}")
+    node.send_to(node.other_s_ids, request_vote_msg(node.swarmer_id, node.term))
 
 
 def leader(node, leader_heartbeat, request_vote):
@@ -259,9 +259,9 @@ def leader(node, leader_heartbeat, request_vote):
             node.state = FOLLOWER
             return                             
 
-    # Send leader heartbeats to everyone.    
-    for other_id in node.other_s_ids:
-        node.send_to([other_id], leader_heartbeat_msg(node.swarmer_id, node.term))
+    # Send leader heartbeats to everyone.
+    print(f">>> Sending heartbeat messages to {node.other_s_ids}")
+    node.send_to(node.other_s_ids, leader_heartbeat_msg(node.swarmer_id, node.term))
         
     # At this point, our old_state is LEADER.                    
     node.old_state = LEADER                    
