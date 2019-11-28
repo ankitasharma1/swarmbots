@@ -3,7 +3,10 @@ from time import sleep, time, strftime, gmtime
 from threading import Thread, Lock
 from select import select
 
-from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+if __name__ != '__main__':
+    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+else:
+    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 
 
 class BT_Server:
@@ -23,7 +26,7 @@ class BT_Server:
             try:
                 self.bt_sock.bind((host, port))
                 self.bt_sock.listen(1)
-                self.debug_print(f"Listening on {host}:{port} ...")
+                self.debug_print(f"Listening on {host}--{port} ...")
                 break
             except Exception as e:
                 self.debug_print("Error binding or listening, retrying in 5 seconds")
@@ -36,11 +39,11 @@ class BT_Server:
 
     def advertise(self):
         while True:
-            self.debug_print(f"Advertising on {self.host}:{self.port}")
+            self.debug_print(f"Advertising on {self.host}--{self.port}")
             client_conn, client_info = self.bt_sock.accept()
             self.register_client(client_conn, client_info[0])
             self.debug_print(f"Connected to {client_info[0]}")
-            print(f">>> Connected to {client_info[0]}:{client_info[1]}")
+            print(f">>> Connected to {client_info[0]}--{client_info[1]}")
 
     def register_client(self, client_conn, client_addr):
         self.lock.acquire()
@@ -60,7 +63,7 @@ class BT_Server:
                     byte_msg = msg.encode('utf-8')
                     padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
                     client.sendall(padded_msg)
-                    self.debug_print("Message sent.")
+                    self.debug_print(f"Message sent to {addr}")
                     return True
                 except Exception as e:
                     self.debug_print("Error sending message")
@@ -76,7 +79,7 @@ class BT_Server:
                 byte_msg = msg.encode('utf-8')
                 padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
                 self.clients[client_addr].sendall(padded_msg)
-                self.debug_print("Message sent.")
+                self.debug_print(f"Message sent to {client_addr}")
                 return True
             except Exception as e:
                 self.debug_print("Error sending message")
@@ -116,8 +119,8 @@ class BT_Server:
 
 if __name__ == "__main__":
     # testing
-    from .BT_CONFIG import BT_DICT
-    from .SWARMER_ID import SWARMER_ID
+    from BT_CONFIG import BT_DICT
+    from SWARMER_ID import SWARMER_ID
 
     host = BT_DICT[SWARMER_ID]["ADDR"]
     port = BT_DICT[SWARMER_ID]["PORT"]
@@ -136,7 +139,7 @@ if __name__ == "__main__":
                     print(f"Message from {c}: {msg}")
                 else:
                     print(f"No message from {c}")
-                s.send(c, f"some message from {SWARMER_ID}")
+                s.send(f"===== message from {SWARMER_ID}")
                 sleep(1)
         print("Done checking messages")
         sleep(1)

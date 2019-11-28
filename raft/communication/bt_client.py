@@ -2,7 +2,10 @@ import bluetooth as BT
 from time import sleep, gmtime, strftime, time
 from select import select
 
-from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+if __name__ != '__main__':
+    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+else:
+    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 
 
 def failsafe(func):
@@ -51,7 +54,7 @@ class BT_Client:
                 self.bt_sock.connect((host, port))
                 break
             except BT.btcommon.BluetoothError:
-                self.debug_print(f"Connection to server {host}:{port} unsuccessful, retrying in 3 seconds")
+                self.debug_print(f"Connection to server {host}--{port} unsuccessful, retrying in 3 seconds")
                 self.bt_sock = BT.BluetoothSocket(BT.RFCOMM) 
                 sleep(3)
         self.connected = True
@@ -63,7 +66,7 @@ class BT_Client:
         byte_msg = msg.encode('utf-8')
         padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
         self.bt_sock.sendall(padded_msg)
-        self.debug_print("Message sent.")
+        self.debug_print(f"Message sent to {self.host}--{self.port}")
         return True
     
     @failsafe
@@ -88,8 +91,8 @@ class BT_Client:
 
 if __name__ == "__main__":
     # testing
-    from .BT_CONFIG import BT_DICT
-    from .SWARMER_ID import SWARMER_ID  # only exists locally
+    from BT_CONFIG import BT_DICT
+    from SWARMER_ID import SWARMER_ID  # only exists locally
 
     # change below if testing client for swarmer2
     host = BT_DICT["S1"]["ADDR"]
