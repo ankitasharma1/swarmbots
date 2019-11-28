@@ -1,10 +1,10 @@
 import keyboard
 from time import time
 
-from bt_server import BT_Server
-from KEYBOARD_CONFIG import KEYBOARD_CONFIG_DICT, DEBOUNCE_INTERVAL
+from .bt_server import BT_Server
+from .KEYBOARD_CONFIG import KEYBOARD_CONFIG_DICT, DEBOUNCE_INTERVAL
+from .BT_CONFIG import BT_CONTROLLER_DICT
 
-from BT_CONFIG import BT_CONTROLLER_DICT
 
 def graceful_exit(func):
     def wrapper(*args, **kw_args):
@@ -17,7 +17,8 @@ def graceful_exit(func):
             return
     return wrapper
 
-class Controller():
+
+class Controller:
     def __init__(self, debug=False):
         # how often should commands be sent
         #   NOTE: these values are in seconds, the debounce_interval should be
@@ -75,6 +76,7 @@ class Controller():
             return False
         else:
             return True
+
 
 if __name__ == '__main__':
     control = Controller()

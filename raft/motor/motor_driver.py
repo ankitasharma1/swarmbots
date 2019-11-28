@@ -45,7 +45,7 @@ class MotorDriver:
    
 
 if __name__ == '__main__':
-    from MOTOR_CONFIG import THROTTLE
+    from .MOTOR_CONFIG import THROTTLE
     from time import sleep
    
     # test

@@ -3,7 +3,7 @@ from time import sleep, time, strftime, gmtime
 from threading import Thread, Lock
 from select import select
 
-from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 
 
 class BT_Server:
@@ -55,10 +55,10 @@ class BT_Server:
     # TODO: update calls after merge!!!
     def send(self, msg, client_addr="any"):
         if client_addr == "any":
-            for addr,client in self.clients.items():
+            for addr, client in self.clients.items():
                 try:
                     byte_msg = msg.encode('utf-8')
-                    padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
+                    padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
                     client.send(padded_msg)
                     self.debug_print("Message sent.")
                     return True
@@ -74,7 +74,7 @@ class BT_Server:
         else:
             try:
                 byte_msg = msg.encode('utf-8')
-                padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
+                padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
                 self.clients[client_addr].send(padded_msg)
                 self.debug_print("Message sent.")
                 return True

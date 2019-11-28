@@ -1,6 +1,6 @@
 import json
 
-from MSG_CONFIG import REQUEST_VOTE, RESPONSE_VOTE, LEADER_HEARTBEAT
+from .MSG_CONFIG import REQUEST_VOTE, RESPONSE_VOTE, LEADER_HEARTBEAT
 
 
 def leader_heartbeat_msg(s_id, curr_term):

@@ -1,5 +1,5 @@
 import sys
-from node import Node
+from .node import Node
 
 # Check command line arguments.
 if len(sys.argv) != 2:

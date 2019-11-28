@@ -2,7 +2,7 @@ import bluetooth as BT
 from time import sleep, gmtime, strftime, time
 from select import select
 
-from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 
 
 def failsafe(func):
@@ -61,7 +61,7 @@ class BT_Client:
     @failsafe
     def send(self, msg):
         byte_msg = msg.encode('utf-8')
-        padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
+        padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
         self.bt_sock.send(padded_msg)
         self.debug_print("Message sent.")
         return True
@@ -88,8 +88,8 @@ class BT_Client:
 
 if __name__ == "__main__":
     # testing
-    from BT_CONFIG import BT_DICT
-    from SWARMER_ID import SWARMER_ID
+    from .BT_CONFIG import BT_DICT
+    from .SWARMER_ID import SWARMER_ID  # only exists locally
 
     # change below if testing client for swarmer2
     host = BT_DICT["S1"]["ADDR"]

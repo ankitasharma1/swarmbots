@@ -3,7 +3,7 @@ from time import sleep, time, strftime, gmtime
 from threading import Thread, Lock
 from select import select
 
-from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 
 
 class Server:
@@ -55,7 +55,7 @@ class Server:
         else:
             try:
                 byte_msg = msg.encode('utf-8')
-                padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
+                padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
                 self.clients[client_addr].send(padded_msg)
                 self.debug_print("Message sent.")
                 return True

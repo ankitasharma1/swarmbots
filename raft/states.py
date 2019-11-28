@@ -1,10 +1,10 @@
 import random
 import time
 
-import communication.message as message
-from communication.MSG_CONFIG import REQUEST_VOTE, RESPONSE_VOTE, LEADER_HEARTBEAT
+from .communication.message import leader_heartbeat_msg, request_vote_msg, response_vote_msg, deserialize
+from .communication.MSG_CONFIG import REQUEST_VOTE, RESPONSE_VOTE, LEADER_HEARTBEAT
 
-from RAFT_CONFIG import CLUSTER_SIZE, FOLLOWER, CANDIDATE, LEADER, ELECTION_TIMEOUT
+from .RAFT_CONFIG import CLUSTER_SIZE, FOLLOWER, CANDIDATE, LEADER, ELECTION_TIMEOUT
 
 old_time = time.time()
 
@@ -33,7 +33,7 @@ def do_raft(node):
             msg = node.recv_from(other_id)
             if msg:
                 # Deserialize the message.
-                msg = message.deserialize(msg)
+                msg = deserialize(msg)
                 if msg:
                     # Check the message type.
                     msg_type = msg['type']
@@ -110,7 +110,7 @@ def follower(node, request_vote, leader_heartbeat, election_timeout):
         if len(leader_heartbeat) > 0:
             #print(">>> F: leader correspondance")
             leader_heartbeat_message = leader_heartbeat.pop(0)
-            leader_term = int(leader_heartbeat_message[message.CURR_TERM])
+            leader_term = int(leader_heartbeat_message['curr_term'])
             if leader_term >= node.term:
                 node.term = leader_term
                 # Go back to being a follower. Reset the time.
@@ -120,23 +120,24 @@ def follower(node, request_vote, leader_heartbeat, election_timeout):
     # If we have received a request vote message.
     if len(request_vote) > 0:
         request_vote_message = request_vote.pop(0)
-        candidate_term = int(request_vote_message[message.CURR_TERM])
-        candidate_id = request_vote_message[message.ID]
+        candidate_term = int(request_vote_message['curr_term'])
+        candidate_id = request_vote_message['id']
 
         if candidate_term < node.term:
             # Reject the vote.
-            node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, False))
+            node.send_to([candidate_id], response_vote_msg(node.swarmer_id, node.term, False))
         elif node.voted_for == None:
             print(f">>> F: Granting vote for {candidate_id}")
             # Grant the vote.
             node.voted_for = candidate_id
             node.term = candidate_term                                  
-            node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, True))
+            node.send_to([candidate_id], response_vote_msg(node.swarmer_id, node.term, True))
             # Reset the election.
             oldtime = time.time()  
 
     # At this point, our old_state is FOLLOWER.                    
     node.old_state = FOLLOWER                 
+
 
 def candidate(node, request_vote, leader_heartbeat, response_vote, election_timeout, election_results):
     #print(f">>> Candidate State Term: {node.term}")
@@ -160,7 +161,7 @@ def candidate(node, request_vote, leader_heartbeat, response_vote, election_time
         # Check if we have correspondance from the leader.
         if len(leader_heartbeat) > 0:
             leader_heartbeat_message = leader_heartbeat.pop(0)
-            leader_term = int(leader_heartbeat_message[message.CURR_TERM])
+            leader_term = int(leader_heartbeat_message['curr_term'])
             if leader_term > node.term:
                 node.term = leader_term
                 node.voted_for = None
@@ -173,19 +174,19 @@ def candidate(node, request_vote, leader_heartbeat, response_vote, election_time
         # Process competing request vote.
         if len(request_vote) > 0:
             request_vote_message = request_vote.pop(0)
-            candidate_term = int(request_vote_message[message.CURR_TERM])
-            candidate_id = request_vote_message[message.ID]
+            candidate_term = int(request_vote_message['curr_term'])
+            candidate_id = request_vote_message['id']
             print(f">>> C: Received request vote from {candidate_id} with term {candidate_term}")
 
             if candidate_term < node.term:
                 # Reject the vote.
-                node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, False))
+                node.send_to([candidate_id], response_vote_msg(node.swarmer_id, node.term, False))
                 print(f">>> C: Rejecting vote for {candidate_id}")                
             else:
                 # Grant the vote.
                 node.term = candidate_term   
                 node.voted_for = candidate_id               
-                node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, True))
+                node.send_to([candidate_id], response_vote_msg(node.swarmer_id, node.term, True))
                 # Go back to being a follower.
                 node.old_state = CANDIDATE
                 node.state = FOLLOWER
@@ -195,8 +196,8 @@ def candidate(node, request_vote, leader_heartbeat, response_vote, election_time
         # Precess responses to vote.
         if len(response_vote) > 0:
             response_vote_message = response_vote.pop(0)
-            vote = response_vote_message[message.VOTE]
-            term = int(response_vote_message[message.CURR_TERM])
+            vote = response_vote_message['vote']
+            term = int(response_vote_message['curr_term'])
 
             # If we received a vote, record it.
             if vote:
@@ -221,7 +222,8 @@ def candidate_election_reset(node):
     node.term = int(node.term) + 1
     # Send request votes to everyone.    
     for other_id in node.other_s_ids:
-        node.send_to([other_id], message.request_vote_msg(node.swarmer_id, node.term))
+        node.send_to([other_id], request_vote_msg(node.swarmer_id, node.term))
+
 
 def leader(node, leader_heartbeat, request_vote):
     #print(f">>> Leader State term: {node.term}")
@@ -230,18 +232,18 @@ def leader(node, leader_heartbeat, request_vote):
     if len(request_vote) > 0:
         print(">>> Received request vote")
         request_vote_message = request_vote.pop(0)
-        candidate_term = int(request_vote_message[message.CURR_TERM])
-        candidate_id = request_vote_message[message.ID]
+        candidate_term = int(request_vote_message['curr_term'])
+        candidate_id = request_vote_message['id']
 
         if candidate_term < node.term:
             # Reject the vote.
-            node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, False))
+            node.send_to([candidate_id], response_vote_msg(node.swarmer_id, node.term, False))
         else:
             # Grant the vote.
             print(f">>> L: Granting vote for {candidate_id} with term {candidate_term}")
             node.term = candidate_term
             node.voted_for = candidate_id                  
-            node.send_to([candidate_id], message.response_vote_msg(node.swarmer_id, node.term, True))
+            node.send_to([candidate_id], response_vote_msg(node.swarmer_id, node.term, True))
             # Go back to being a follower.
             node.old_state = LEADER
             node.state = FOLLOWER
@@ -250,7 +252,7 @@ def leader(node, leader_heartbeat, request_vote):
     # Process leader heartbeat.
     if len(leader_heartbeat) > 0:
         leader_heartbeat_message = leader_heartbeat.pop(0)
-        leader_term = int(leader_heartbeat_message[message.CURR_TERM])
+        leader_term = int(leader_heartbeat_message['curr_term'])
 
         if leader_term > node.term:
             print(f">>> L: correspondance from leader with term {leader_term}--> follower") 
@@ -262,7 +264,7 @@ def leader(node, leader_heartbeat, request_vote):
 
     # Send leader heartbeats to everyone.    
     for other_id in node.other_s_ids:
-        node.send_to([other_id], message.leader_heartbeat_msg(node.swarmer_id, node.term))
+        node.send_to([other_id], leader_heartbeat_msg(node.swarmer_id, node.term))
         
     # At this point, our old_state is LEADER.                    
     node.old_state = LEADER                    

@@ -2,7 +2,7 @@ from socket import socket, AF_INET, SOCK_STREAM
 from time import sleep, gmtime, strftime, time
 from select import select
 
-from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 
 
 def failsafe(func):
@@ -61,7 +61,7 @@ class Client:
     @failsafe
     def send(self, msg):
         byte_msg = msg.encode('utf-8')
-        padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
+        padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
         self.sock.send(padded_msg)
         self.debug_print("Message sent.")
         return True
