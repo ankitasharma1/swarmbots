@@ -62,7 +62,7 @@ class BT_Client:
     def send(self, msg):
         byte_msg = msg.encode('utf-8')
         padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
-        self.bt_sock.send(padded_msg)
+        self.bt_sock.sendall(padded_msg)
         self.debug_print("Message sent.")
         return True
     

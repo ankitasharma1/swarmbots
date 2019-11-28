@@ -145,7 +145,7 @@ class Node:
                     continue
                 s_id = self.addr_dict[addr]
                 msg = server.recv(addr)  # set message size here
-                print(f"Received message from {s_id}")
+                print(f"Received message {msg} from {s_id}")
                 # x = msg  # debugging purposes
                 print(f"Sleeping now")
                 time.sleep(0.75)

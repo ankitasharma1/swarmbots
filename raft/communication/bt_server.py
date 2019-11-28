@@ -59,7 +59,7 @@ class BT_Server:
                 try:
                     byte_msg = msg.encode('utf-8')
                     padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
-                    client.send(padded_msg)
+                    client.sendall(padded_msg)
                     self.debug_print("Message sent.")
                     return True
                 except Exception as e:
@@ -75,7 +75,7 @@ class BT_Server:
             try:
                 byte_msg = msg.encode('utf-8')
                 padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
-                self.clients[client_addr].send(padded_msg)
+                self.clients[client_addr].sendall(padded_msg)
                 self.debug_print("Message sent.")
                 return True
             except Exception as e:
@@ -116,13 +116,13 @@ class BT_Server:
 
 if __name__ == "__main__":
     # testing
-    from BT_CONFIG import BT_DICT
-    from SWARMER_ID import SWARMER_ID
+    from .BT_CONFIG import BT_DICT
+    from .SWARMER_ID import SWARMER_ID
 
     host = BT_DICT[SWARMER_ID]["ADDR"]
     port = BT_DICT[SWARMER_ID]["PORT"]
 
-    s = BluetoothServer(host, port, SWARMER_ID, True)
+    s = BT_Server(host, port, SWARMER_ID, True)
     start = time()
     while time() - start < 60:
         print("Starting to check for messages ...")
