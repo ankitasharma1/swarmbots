@@ -1,5 +1,5 @@
 # message meta
-MSG_SIZE = 256  # bytes
+MSG_SIZE = 512  # bytes
 PADDING_BYTE = b' '
 
 # socket config

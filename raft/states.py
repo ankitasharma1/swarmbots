@@ -32,19 +32,16 @@ def do_raft(node):
         for other_id in node.other_s_ids:
             msg = node.recv_from(other_id)
             if msg:
-                # Deserialize the message.
-                msg = deserialize(msg)
-                if msg:
-                    # Check the message type.
-                    msg_type = msg['type']
-                    if msg_type == LEADER_HEARTBEAT:
-                        leader_heartbeat.append(msg)
-                    elif msg_type == REQUEST_VOTE:
-                        request_vote.append(msg)
-                    elif msg_type == RESPONSE_VOTE:
-                        response_vote.append(msg)
-                    else:
-                        print(f"Unexpected type: {msg_type}")
+                # Check the message type.
+                msg_type = msg['type']
+                if msg_type == LEADER_HEARTBEAT:
+                    leader_heartbeat.append(msg)
+                elif msg_type == REQUEST_VOTE:
+                    request_vote.append(msg)
+                elif msg_type == RESPONSE_VOTE:
+                    response_vote.append(msg)
+                else:
+                    print(f"Unexpected type: {msg_type}")
         
         # TODO: clean up election_results for terms < than node.term
         
@@ -96,7 +93,7 @@ def do_raft(node):
 
 
 def follower(node, request_vote, leader_heartbeat, election_timeout):
-    #print(f">>> Follower State Term: {node.term}")
+    print(f">>> Follower State Term: {node.term}")
     global old_time
     
     # Check whether the election timeout has elapsed.
@@ -108,7 +105,7 @@ def follower(node, request_vote, leader_heartbeat, election_timeout):
     else:
         # Check if we have correspondance from the leader.
         if len(leader_heartbeat) > 0:
-            #print(">>> F: leader correspondance")
+            print(">>> F: leader correspondance")
             leader_heartbeat_message = leader_heartbeat.pop(0)
             leader_term = int(leader_heartbeat_message['curr_term'])
             if leader_term >= node.term:

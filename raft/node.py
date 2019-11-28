@@ -135,9 +135,9 @@ class Node:
 
     def handle_incoming_conn(self, server):
         # Keep track of byte stream for each socket.
-        prev_msg = dict()
-        for addr in self.all_addresses:
-            prev_msg.update({addr: ""})
+        # prev_msg = dict()
+        # for addr in self.all_addresses:
+        #     prev_msg.update({addr: ""})
         
         while True:
             for addr in self.all_addresses:
@@ -208,6 +208,7 @@ class Node:
             self.client_lock.acquire()
             if len(self.outgoing_messages[idx]) > 0:
                 msg = self.outgoing_messages[idx].pop(0)
+                print(f">>> Sending message {msg} to {self.addr_dict[addr]}")
             self.client_lock.release()
             if msg:
                 client.send(msg)
