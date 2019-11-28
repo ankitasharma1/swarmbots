@@ -147,15 +147,16 @@ class Node:
                 msg = server.recv(addr)  # set message size here
                 print(f"Received message from {s_id}")
                 # x = msg  # debugging purposes
-                print(msg)
                 print(f"Sleeping now")
-                time.sleep(0.3)
-                q_idx = self.config_dict[s_id]["SHARED_Q_INDEX"]
-                msg_dict = deserialize(msg)
-                if msg_dict:
-                    self.server_lock.acquire()
-                    self.incoming_messages[q_idx].append(msg)
-                    self.server_lock.release()
+                time.sleep(0.75)
+                if msg:
+                    print(f"========= {msg} ==========")
+                    q_idx = self.config_dict[s_id]["SHARED_Q_INDEX"]
+                    msg_dict = deserialize(msg)
+                    if msg_dict:
+                        self.server_lock.acquire()
+                        self.incoming_messages[q_idx].append(msg)
+                        self.server_lock.release()
 
                 # if msg:
                 #     # Check if all of the bytes have arrived.
