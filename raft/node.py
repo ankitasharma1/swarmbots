@@ -141,8 +141,13 @@ class Node:
             for addr in self.all_addresses:
                 if addr == self.config_dict[self.swarmer_id]["ADDR"]:
                     continue
+                print(f"Checking for message from {BT_ADDR_DICT[addr]}")
                 msg = server.recv(addr)  # set message size here
+                print(f"Received message from {BT_ADDR_DICT[addr]}")
                 x = msg  # debugging purposes
+                print(msg)
+                print(f"Sleeping now")
+                time.sleep(0.3)
                 if msg:
                     # Check if all of the bytes have arrived.
                     if len(msg) != MSG_SIZE:
