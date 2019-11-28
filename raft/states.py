@@ -1,10 +1,10 @@
 import random
 import time
 
-from .communication.message import leader_heartbeat_msg, request_vote_msg, response_vote_msg, deserialize
-from .communication.MSG_CONFIG import REQUEST_VOTE, RESPONSE_VOTE, LEADER_HEARTBEAT
+from communication.message import leader_heartbeat_msg, request_vote_msg, response_vote_msg, deserialize
+from communication.MSG_CONFIG import REQUEST_VOTE, RESPONSE_VOTE, LEADER_HEARTBEAT
 
-from .RAFT_CONFIG import CLUSTER_SIZE, FOLLOWER, CANDIDATE, LEADER, ELECTION_TIMEOUT
+from RAFT_CONFIG import CLUSTER_SIZE, FOLLOWER, CANDIDATE, LEADER, ELECTION_TIMEOUT
 
 old_time = time.time()
 

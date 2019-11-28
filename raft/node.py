@@ -3,16 +3,16 @@ from threading import Thread, Lock
 import time
 import json
 
-from .states import do_raft
+from states import do_raft
 
-from .communication.server import Server
-from .communication.client import Client
-from .communication.bt_server import BT_Server
-from .communication.bt_client import BT_Client
+from communication.server import Server
+from communication.client import Client
+from communication.bt_server import BT_Server
+from communication.bt_client import BT_Client
 
-from .communication.WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
-from .communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT
-from .communication.MSG_CONFIG import MSG_SIZE
+from communication.WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
+from communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT
+from communication.MSG_CONFIG import MSG_SIZE
 
 """
 REPL Commands
