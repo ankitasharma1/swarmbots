@@ -107,7 +107,7 @@ class Node:
     def service_outgoing_conns(self):
         print("Establishing outgoing connections")
         print(f"Debug status: {self.debug}")
-        for k,v in self.config_dict.items():
+        for k, v in self.config_dict.items():
             if k == self.swarmer_id:
                 continue
             if self.wifi:
@@ -122,7 +122,7 @@ class Node:
 
     def service_incoming_conns(self):
         print("Establishing incoming connections")
-        for k,v in self.config_dict.items():
+        for k, v in self.config_dict.items():
             if k == self.swarmer_id:
                 continue
             thread_args = [self.server]
@@ -141,8 +141,8 @@ class Node:
             for addr in self.all_addresses:
                 if addr == self.config_dict[self.swarmer_id]["ADDR"]:
                     continue
-                msg = server.recv(addr) # set message size here
-                x = msg # debugging purposes
+                msg = server.recv(addr)  # set message size here
+                x = msg  # debugging purposes
                 if msg:
                     # Check if all of the bytes have arrived.
                     if len(msg) != MSG_SIZE:
