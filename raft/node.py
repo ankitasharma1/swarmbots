@@ -72,16 +72,23 @@ class Node:
         self.service_incoming_conns()
         self.service_outgoing_conns()
 
+        print("init before cluster connect guard")
+
         while (self.client_count < 2) or (len(self.server.clients) < 2):
             time.sleep(0.05)
+
+        print("init after cluster connect guard")
 
         t = Thread(target=self.start_raft)
         t.setDaemon(True)
         t.start()
 
+        print("raft started, starting REPL")
+
         self.service_repl()
 
     def start_raft(self):
+        print("Starting Raft")
         do_raft(self)
 
     def send_to(self, client_id_list, msg):
@@ -147,7 +154,7 @@ class Node:
                 print(f"Received message {msg} from {s_id}")
                 # x = msg  # debugging purposes
                 print(f"Sleeping now")
-                time.sleep(0.75)
+                time.sleep(1.5)
                 if msg:
                     print(f"========= {msg} ==========")
                     q_idx = self.config_dict[s_id]["SHARED_Q_INDEX"]
