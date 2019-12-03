@@ -20,9 +20,13 @@ opencv_createsamples -num 500 -vec samples.vec -info annotations.txt -bg negativ
 
 # Once the .vec file and negatives list has been created, we can now begin training.
 # (We'll be using LBP, which is faster than HAAR, for the training algorithm)
-# 
-#
-#
-#
-#
+# -featureType : which types of sample vectors for which algorighm we want to make
+# -w,-h : the size of the sample vectors (?)
+# -numPos : the number of positive images/samples we used (should be 85% percent of the 
+#             actual number of positives we had)
+# -data : directory where the result .xml files are stored
+# -bg : file whose lines are each a path to a negative image
+# -acceptanceRatioBreakValue : the training calculates and tries to minimize an error -- once
+#             that error is below this value we stop
+# -vec : the file containing the sample vectors created in the last step
 opencv_traincascade -featureType LBP -w 20 -h 20 -numPos 425 -data training_res -bg negatives.txt -acceptanceRatioBreakValue .00001 -vec samples.vec
