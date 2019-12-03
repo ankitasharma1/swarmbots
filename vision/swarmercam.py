@@ -2,6 +2,7 @@ import cv2
 
 class SwarmerCam(object):
 	def __init__(self, cascPath):
+                # TODO: Create three of these classifiers, one for each bot
 		self.cascade_classifier = cv2.CascadeClassifier(cascPath) 
 		self.video_capture = cv2.VideoCapture(0) # 0 = camera. A path to a video file also works
 		# Open the camera and get the frame properties 
