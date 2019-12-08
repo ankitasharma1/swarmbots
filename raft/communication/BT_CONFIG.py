@@ -7,7 +7,7 @@ BT_DICT = {
         "SEED": 10
     },
     "S2": {
-        "ADDR": "B8:27:EB:6A:D3:2D",
+        "ADDR": "B8:27:EB:89:EA:B7",
         "S1_PORT": 5,
         "S3_PORT": 6,
         "SHARED_Q_INDEX": 1,
