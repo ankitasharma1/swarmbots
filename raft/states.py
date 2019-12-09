@@ -12,8 +12,7 @@ should_print_ctr = 0
 
 def do_raft(node):
     # Election timeout.
-    election_timeout = node.follow_timeout
-    print(election_timeout)
+    election_timeout = ELECTION_TIMEOUT
     election_results = dict()
 
     # Incoming messages.
