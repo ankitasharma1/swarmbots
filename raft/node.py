@@ -13,6 +13,7 @@ from communication.WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
 from communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT, S_IDS
 
 from communication.message import deserialize
+from communication.MSG_CONFIG import MSG_SIZE
 
 """
 REPL Commands

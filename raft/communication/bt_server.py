@@ -107,16 +107,17 @@ class BT_Server:
         if client_addr not in self.clients:
             self.debug_print(f"Error receiving message, {client_addr} not in clients dict")
             sleep(msg_delay)
-            return None
+            return False
         else:
             try:
                 ready = select([self.clients[client_addr]], [], [], msg_timeout)
                 if ready[0]:
                     data = self.clients[client_addr].recv(msg_size)
-                    sleep(msg_delay)
+                    self.debug_print(f"Received msg of length {len(data)}", True)
                     msg = data.decode('utf-8').rstrip()
                     self.debug_print(f"Received {msg} from {client_addr}")
                     self.bad_msg_ctr[client_addr] = 0
+                    sleep(msg_delay)
                     return msg
                 else:
                     sleep(msg_delay)
@@ -124,13 +125,13 @@ class BT_Server:
                     if self.bad_msg_ctr[client_addr] > 1:
                         self.remove_client(client_addr)
                         self.debug_print(f"Client has sent at least 3 empty messages, killed em", True)
-                    return None
+                    return False
             except Exception as e:
                 self.debug_print("Error receiving message", True)
                 self.debug_print(f"{e}", True)
                 self.remove_client(client_addr)
                 sleep(msg_delay)
-                return None
+                return False
     
     def debug_print(self, print_string, override=False):
         if self.debug or override:
