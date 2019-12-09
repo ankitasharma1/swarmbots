@@ -40,9 +40,11 @@ class BT_Server:
     def advertise(self):
         while True:
             self.debug_print(f"Advertising on {self.host}--{self.port}")
+            print(f"Advertising on {self.host}--{self.port}") # TODO: delete
             client_conn, client_info = self.bt_sock.accept()
             self.register_client(client_conn, client_info[0])
             self.debug_print(f"Connected to {client_info[0]}")
+            print(f"Connected to {client_info[0]}") # TODO: delete
             print(f">>> Connected to {client_info[0]}--{client_info[1]}")
 
     def register_client(self, client_conn, client_addr):

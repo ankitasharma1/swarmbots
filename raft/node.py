@@ -68,7 +68,7 @@ class Node:
 
         print("init before cluster connect guard")
 
-        while (self.client_count < 2) or (len(self.server.clients) < 2):
+        while self.client_count < 2:
             time.sleep(0.2)
 
         print("init after cluster connect guard")
@@ -147,8 +147,9 @@ class Node:
             time.sleep(1)
 
     def handle_outgoing_conn(self, client, addr, port, s_id):
+        print(f"Attempting to connect to {s_id}--{addr}--{port}")
         client.connect(addr, port)
-        print(f"Connected to {s_id}:{addr}:{port}")
+        print(f"Connected to {s_id}--{addr}--{port}")
         self.client_count = self.client_count + 1
         print(f"Client count: {self.client_count}")
         while True:
