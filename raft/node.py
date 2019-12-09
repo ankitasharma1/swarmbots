@@ -23,6 +23,9 @@ HELP = 'h'
 STATE = 's'
 TERM = 't'
 
+# prevent overuse of CPU by adding small sleeps
+OVERUSE_DELAY = 0.05
+
 
 class Node:
     def __init__(self, swarmer_id, wifi=False, debug=False):
@@ -98,13 +101,17 @@ class Node:
             self.client_lock.release()
 
     def recv_from(self, server_id):
+        time.sleep(OVERUSE_DELAY)
         if server_id != self.swarmer_id:        
             msg = None
             self.server_lock.acquire()
             if len(self.incoming_msg_dict[server_id]) > 0:
                 msg = self.incoming_msg_dict[server_id].pop(0)
             self.server_lock.release()
-            return deserialize(msg)
+            if msg:
+                return deserialize(msg)
+            else:
+                return None
 
     def service_outgoing_conns(self):
         print("Establishing outgoing connections")
