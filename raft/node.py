@@ -135,7 +135,7 @@ class Node:
         addr = self.config_dict[s_id]["ADDR"]
         while True:
             msg = server.recv(addr)  # set message size here
-            print(f"Received message {msg} from {s_id}")
+            # print(f"Received message {msg} from {s_id}")
             if msg:
                 msg_dict = deserialize(msg)
                 if msg_dict:
