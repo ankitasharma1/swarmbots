@@ -62,23 +62,25 @@ class BT_Client:
         return True
 
     @failsafe
-    def send(self, msg):
+    def send(self, msg, msg_delay=MSG_DELAY):
         byte_msg = msg.encode('utf-8')
         padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
         self.bt_sock.sendall(padded_msg)
         self.debug_print(f"Message sent to {self.host}--{self.port}")
-        sleep(MSG_DELAY)
+        sleep(msg_delay)
         return True
     
     @failsafe
-    def recv(self, msg_timeout=RECV_TIMEOUT, msg_size=MSG_SIZE):
+    def recv(self, msg_timeout=RECV_TIMEOUT, msg_delay=MSG_DELAY, msg_size=MSG_SIZE):
         ready = select([self.bt_sock], [], [], msg_timeout)
         if ready[0]:
             data = self.bt_sock.recv(msg_size)
-            sleep(MSG_DELAY)
-            return data.decode('utf-8').rstrip()
+            msg = data.decode('utf-8').rstrip()
+            self.debug_print(f"Received \"{msg}\"")
+            sleep(msg_delay)
+            return msg
         else:
-            sleep(MSG_DELAY)
+            sleep(msg_delay)
             return None
     
     def debug_print(self, print_string):
