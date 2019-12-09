@@ -39,6 +39,16 @@ class MotorDriver:
         self.kit.motor2.throttle = -1 * self.throttle
 
     @failsafe
+    def orient_right(self):
+        self.kit.motor1.throttle = self.throttle
+        self.kit.motor2.throttle = -1 * self.throttle        
+
+    @failsafe
+    def orient_left(self):
+        self.kit.motor1.throttle = -1 * self.throttle
+        self.kit.motor2.throttle = self.throttle               
+
+    @failsafe
     def stop(self):
         self.kit.motor1.throttle = 0
         self.kit.motor2.throttle = 0
