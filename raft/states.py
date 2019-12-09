@@ -2,7 +2,7 @@ import random
 import time
 
 from communication.message import leader_heartbeat_msg, request_vote_msg, response_vote_msg, deserialize
-from communication.MSG_CONFIG import REQUEST_VOTE, RESPONSE_VOTE, LEADER_HEARTBEAT
+from communication.MSG_CONFIG import REQUEST_VOTE, RESPONSE_VOTE, LEADER_HEARTBEAT, MSG_RECV_DELAY
 
 from RAFT_CONFIG import CLUSTER_SIZE, FOLLOWER, CANDIDATE, LEADER, ELECTION_TIMEOUT
 
@@ -42,7 +42,9 @@ def do_raft(node):
                     response_vote.append(msg)
                 else:
                     print(f"Unexpected type: {msg_type}")
-        
+        time.sleep(MSG_RECV_DELAY)
+
+
         # TODO: clean up election_results for terms < than node.term
         
         if node.state == FOLLOWER:

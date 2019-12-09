@@ -13,7 +13,7 @@ from communication.WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
 from communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT, S_IDS
 
 from communication.message import deserialize
-from communication.MSG_CONFIG import MSG_SIZE
+from communication.MSG_CONFIG import MSG_SEND_DELAY, MSG_RECV_DELAY
 
 """
 REPL Commands
@@ -99,9 +99,9 @@ class Node:
             print(f">>> Qeueing {msg} to send to {c_id}")
             self.outgoing_msg_dict[c_id].append(msg)
             self.client_lock.release()
+        time.sleep(MSG_SEND_DELAY)
 
     def recv_from(self, server_id):
-        time.sleep(OVERUSE_DELAY)
         if server_id != self.swarmer_id:        
             msg = None
             self.server_lock.acquire()
@@ -152,6 +152,7 @@ class Node:
                 self.server_lock.acquire()
                 self.incoming_msg_dict[s_id].append(msg)
                 self.server_lock.release()
+            time.sleep(MSG_RECV_DELAY)
 
     def handle_outgoing_conn(self, client, addr, port, s_id):
         print(f"Attempting to connect to {s_id}--{addr}--{port}")

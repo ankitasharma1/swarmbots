@@ -8,8 +8,8 @@ RECV_TIMEOUT = 0.15  # seconds
 
 # socket recv and send delay; we run into bandwidth issues over BT if we send
 # and check recv as fast as we can
-MSG_SEND_DELAY = RECV_TIMEOUT + 0.05
-MSG_RECV_DELAY = RECV_TIMEOUT
+MSG_RECV_DELAY = 0.075
+MSG_SEND_DELAY = MSG_RECV_DELAY * 2
 
 # message types
 REQUEST_VOTE = "request_vote"

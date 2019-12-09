@@ -4,9 +4,9 @@ from threading import Thread, Lock
 from select import select
 
 if __name__ != '__main__':
-    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_SEND_DELAY, MSG_RECV_DELAY
+    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 else:
-    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_SEND_DELAY, MSG_RECV_DELAY
+    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 
 
 class BT_Server:
@@ -113,7 +113,6 @@ class BT_Server:
                 ready = select([self.clients[client_addr]], [], [], msg_timeout)
                 if ready[0]:
                     data = self.clients[client_addr].recv(msg_size)
-                    self.debug_print(f"Received msg of length {len(data)}", True)
                     msg = data.decode('utf-8').rstrip()
                     self.debug_print(f"Received {msg} from {client_addr}")
                     self.bad_msg_ctr[client_addr] = 0
