@@ -1,9 +1,15 @@
+============== 1. Create the raw positive and negative data =============
+# Positives should contain the object(s) that we want to recognize (labeled later)
+# Negatives should not contain the objects that we want to recognize
+# More negatives is both easier to do and results in better object detection
+python3 capture_video.py <dest dir>
 
-============== 1. Label the data =============
+============== 2. Label the data =============
 # To annotate (draw bounding boxes) of images at data/positives, storing the
 # results in annotations.txt
 opencv_annotation --images data/positives --annotations annotations.txt
 
+============== 3. Create the positive samples =============
 # Info at: https://docs.opencv.org/2.4/doc/user_guide/ug_traincascade.html
 # Once the positive images are annotated, we'll need to create the .vec file
 # which will contain the actual samples to be loaded by the classifier used in the
@@ -18,6 +24,8 @@ opencv_annotation --images data/positives --annotations annotations.txt
 #		to the number of bounding boxes we have in the annotations file
 opencv_createsamples -num 500 -vec samples.vec -info annotations.txt -bg negatives.txt -w 20 -h 20
 
+============== 3. Create the negative samples =============
+python 
 # Once the .vec file and negatives list has been created, we can now begin training.
 # (We'll be using LBP, which is faster than HAAR, for the training algorithm)
 # -featureType : which types of sample vectors for which algorighm we want to make
