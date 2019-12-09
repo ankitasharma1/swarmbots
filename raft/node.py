@@ -55,8 +55,8 @@ class Node:
         self.client_threads = []
         self.server_lock = Lock()
         self.client_lock = Lock()
-        self.send_lock = Lock()
-        self.recv_lock = Lock()
+        # self.send_lock = Lock()
+        # self.recv_lock = Lock()
 
         # Raft info
         self.seed = self.config_dict[swarmer_id]["SEED"]
@@ -144,9 +144,7 @@ class Node:
     def handle_incoming_conn(self, server, s_id):
         addr = self.config_dict[s_id]["ADDR"]
         while True:
-            self.recv_lock.acquire()
             msg = server.recv(addr)  # set message size here
-            self.recv_lock.release()
             # print(f"Received message {msg} from {s_id}")
             if msg:
                 self.server_lock.acquire()
@@ -168,9 +166,7 @@ class Node:
                 # print(f">>> Sending message {msg} to {s_id}")
             self.client_lock.release()
             if msg:
-                self.send_lock.acquire()
                 client.send(msg)
-                self.send_lock.release()
 
     def service_repl(self):
         while True:
