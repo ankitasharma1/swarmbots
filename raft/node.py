@@ -15,6 +15,8 @@ from communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT, S_IDS
 from communication.message import deserialize
 from communication.MSG_CONFIG import MSG_SEND_DELAY, MSG_RECV_DELAY
 
+from RAFT_CONFIG import RAFT_DICT
+
 """
 REPL Commands
 """
@@ -59,7 +61,7 @@ class Node:
         # self.recv_lock = Lock()
 
         # Raft info
-        self.seed = self.config_dict[swarmer_id]["SEED"]
+        self.follow_timeout = RAFT_DICT[swarmer_id]["FOLLOWER_TIMEOUT"]
         self.state = 'join'
         self.old_state = ""        
         self.term = 0
