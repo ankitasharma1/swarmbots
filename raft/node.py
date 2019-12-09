@@ -38,9 +38,6 @@ class Node:
             self.all_addresses = BT_ADDRESSES
             self.addr_dict = BT_ADDR_DICT
 
-        self.host = self.config_dict[swarmer_id]["ADDR"]
-        self.port = self.config_dict[swarmer_id]["PORT"]
-
         self.client_count = 0
 
         # Message queues, needs locking in each server thread
