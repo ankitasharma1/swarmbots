@@ -24,7 +24,7 @@ STATE = 's'
 TERM = 't'
 
 # prevent overuse of CPU by adding small sleeps
-OVERUSE_DELAY = 0.05
+OVERUSE_DELAY = 0
 
 
 class Node:
@@ -96,7 +96,7 @@ class Node:
             if c_id == self.swarmer_id:
                 continue
             self.client_lock.acquire()
-            print(f">>> Qeueing {msg} to send to {c_id}")
+            # print(f">>> Qeueing {msg} to send to {c_id}")
             self.outgoing_msg_dict[c_id].append(msg)
             self.client_lock.release()
         time.sleep(MSG_SEND_DELAY)
@@ -165,7 +165,7 @@ class Node:
             self.client_lock.acquire()
             if len(self.outgoing_msg_dict[s_id]) > 0:
                 msg = self.outgoing_msg_dict[s_id].pop(0)
-                print(f">>> Sending message {msg} to {s_id}")
+                # print(f">>> Sending message {msg} to {s_id}")
             self.client_lock.release()
             if msg:
                 self.send_lock.acquire()
