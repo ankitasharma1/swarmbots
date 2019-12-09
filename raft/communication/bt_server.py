@@ -136,34 +136,36 @@ if __name__ == "__main__":
     from BT_CONFIG import BT_DICT, BT_ADDR_DICT, S_IDS
     from SWARMER_ID import SWARMER_ID
 
-    servers = []
-    recv_counts = {}
+    def process_msgs(server):
+        recv_ctr = 0
+        while True:
+            for client_addr in list(server.clients.keys()):
+                # print(f"Checking for messages from {BT_ADDR_DICT[client_addr]}")
+                msg = server.recv(client_addr)
+                if msg:
+                    recv_ctr += 1
+                    if recv_ctr % 100 == 0:
+                        server.debug_print(f"{recv_ctr} messages received from {BT_ADDR_DICT[client_addr]}", True)
+                else:
+                    print(f"No messages from {BT_ADDR_DICT[client_addr]}")
+
+
     for s_id in S_IDS:
         if s_id == SWARMER_ID:
             print(f"Detected my s_id: {s_id}, not creating a server")
             continue
         else:
-            recv_counts[s_id] = 0
             s = BT_Server(BT_DICT[SWARMER_ID]["ADDR"], BT_DICT[SWARMER_ID][f"{s_id}_PORT"], SWARMER_ID)
-            servers.append(s)
+            t = Thread(target=process_msgs, args=(s,))
+            t.setDaemon(True)
+            t.start()
 
     while True:
         try:
-            for server in servers:
-                for client_addr in list(server.clients.keys()):
-                    # print(f"Checking for messages from {BT_ADDR_DICT[client_addr]}")
-                    msg = server.recv(client_addr)
-                    if msg:
-                        recv_counts[BT_ADDR_DICT[client_addr]] += 1
-                        if recv_counts[BT_ADDR_DICT[client_addr]] % 100 == 0:
-                            server.debug_print(f"{recv_counts[BT_ADDR_DICT[client_addr]]} messages received from {BT_ADDR_DICT[client_addr]}", True)
-                    else:
-                        print(f"No messages from {BT_ADDR_DICT[client_addr]}")
+            print("Main thread still alive, servers should be receiving")
+            sleep(60)
         except KeyboardInterrupt:
             print("Keyboard interrupt detected. Stopping servers safely ...")
             break
-
-    for s in servers:
-        s.clean_up()
 
     print("Servers stopped safely. Goodbye.")
