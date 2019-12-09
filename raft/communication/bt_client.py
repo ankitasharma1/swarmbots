@@ -76,8 +76,8 @@ class BT_Client:
         ready = select([self.bt_sock], [], [], msg_timeout)
         if ready[0]:
             data = self.bt_sock.recv(msg_size)
-            msg = data.decode('utf-8').rstrip()
-            self.debug_print(f"Received \"{msg}\"")
+            msg = data.decode('utf-8')
+            self.debug_print(f"Received {msg}")
             sleep(msg_delay)
             return msg
         else:
