@@ -1,5 +1,5 @@
 import bluetooth as BT
-from time import sleep, gmtime, strftime, time
+from time import sleep, gmtime, strftime
 from select import select
 
 if __name__ != '__main__':
@@ -91,30 +91,33 @@ class BT_Client:
 
 if __name__ == "__main__":
     # testing
-    from BT_CONFIG import BT_DICT, S_IDS
+    from BT_CONFIG import BT_DICT
     from SWARMER_ID import SWARMER_ID  # only exists locally
+    import sys
 
-    clients = []
-    for s_id in S_IDS:
-        if s_id == SWARMER_ID:
-            print(f"Detected my s_id: {s_id}, not creating a client")
-            continue
-        else:
-            c = BT_Client(SWARMER_ID, True)
-            to_host = BT_DICT[s_id]["ADDR"]
-            to_port = BT_DICT[s_id][f"{SWARMER_ID}_PORT"]
-            c.connect(to_host, to_port)
-            clients.append(c)
+    if len(sys.argv) < 2:
+        print("Usage: python3 bt_client [s_id to connect to]")
+        sys.exit(1)
+
+    s_id = sys.argv[1]
+
+    if s_id not in BT_DICT:
+        print(f"Error: {s_id} not valid swarmer id: {list(BT_DICT.keys())}")
+        sys.exit(1)
+
+    c = BT_Client(SWARMER_ID, True)
+    to_host = BT_DICT[s_id]["ADDR"]
+    to_port = BT_DICT[s_id][f"{SWARMER_ID}_PORT"]
+    c.connect(to_host, to_port)
 
     msg = f"Hello from {SWARMER_ID}!!!"
-    for c in clients:
+    while True:
         try:
             c.send(msg)
         except KeyboardInterrupt:
             print("Keyboard interrupt detected. Stopping clients safely ...")
             break
 
-    for c in clients:
-        c.clean_up()
+    c.clean_up()
 
     print("Clients stopped safely. Goodbye.")
