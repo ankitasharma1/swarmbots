@@ -27,10 +27,7 @@ def make_msg(s_id, msg_type, curr_term=None, vote=None):
 
 def deserialize(message):
     try:
-        print("DESERIALIZING")
         msg = json.loads(message)
-        if type(msg) == dict:
-            print("DESERIALIZING COMPLETE")
         return msg
     except Exception as e:
         print(f"{e}")

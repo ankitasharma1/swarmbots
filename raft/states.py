@@ -93,7 +93,7 @@ def do_raft(node):
 
 
 def follower(node, request_vote, leader_heartbeat, election_timeout):
-    print(f">>> Follower State Term: {node.term}")
+    # print(f">>> Follower State Term: {node.term}")
     global old_time
     
     # Check whether the election timeout has elapsed.
@@ -137,7 +137,7 @@ def follower(node, request_vote, leader_heartbeat, election_timeout):
 
 
 def candidate(node, request_vote, leader_heartbeat, response_vote, election_timeout, election_results):
-    #print(f">>> Candidate State Term: {node.term}")
+    # print(f">>> Candidate State Term: {node.term}")
     global old_time
         
     if election_results.get(node.term) >= round(CLUSTER_SIZE / 2):
@@ -223,7 +223,7 @@ def candidate_election_reset(node):
 
 
 def leader(node, leader_heartbeat, request_vote):
-    #print(f">>> Leader State term: {node.term}")
+    # print(f">>> Leader State term: {node.term}")
 
     # Process competing request vote.
     if len(request_vote) > 0:

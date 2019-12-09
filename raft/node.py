@@ -101,7 +101,7 @@ class Node:
             if len(self.incoming_msg_dict[server_id]) > 0:
                 msg = self.incoming_msg_dict[server_id].pop(0)
             self.server_lock.release()
-            return msg
+            return deserialize(msg)
 
     def service_outgoing_conns(self):
         print("Establishing outgoing connections")
@@ -137,11 +137,9 @@ class Node:
             msg = server.recv(addr)  # set message size here
             # print(f"Received message {msg} from {s_id}")
             if msg:
-                msg_dict = deserialize(msg)
-                if msg_dict:
-                    self.server_lock.acquire()
-                    self.incoming_msg_dict[s_id].append(msg)
-                    self.server_lock.release()
+                self.server_lock.acquire()
+                self.incoming_msg_dict[s_id].append(msg)
+                self.server_lock.release()
 
     def handle_outgoing_conn(self, client, addr, port, s_id):
         print(f"Attempting to connect to {s_id}--{addr}--{port}")

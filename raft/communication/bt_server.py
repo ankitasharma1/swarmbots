@@ -114,7 +114,7 @@ class BT_Server:
                 if ready[0]:
                     data = self.clients[client_addr].recv(msg_size)
                     sleep(msg_delay)
-                    msg = data.decode('utf-8')
+                    msg = data.decode('utf-8').rstrip()
                     self.debug_print(f"Received {msg} from {client_addr}")
                     self.bad_msg_ctr[client_addr] = 0
                     return msg
