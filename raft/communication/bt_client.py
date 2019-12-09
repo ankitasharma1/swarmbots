@@ -83,8 +83,8 @@ class BT_Client:
             sleep(msg_delay)
             return None
     
-    def debug_print(self, print_string):
-        if self.debug:
+    def debug_print(self, print_string, override=False):
+        if self.debug or override:
             time_string = strftime("%H:%M:%S", gmtime())
             id_string = f" {self.swarmer_id} Client: "
             print(time_string + id_string + print_string)
@@ -122,7 +122,7 @@ if __name__ == "__main__":
             c.send(msg)
             sent_ctr += 1
             if sent_ctr % 100 == 0:
-                c.debug_print(f"{sent_ctr} messages sent.")
+                c.debug_print(f"{sent_ctr} messages sent.", True)
         except KeyboardInterrupt:
             print("Keyboard interrupt detected. Stopping clients safely ...")
             break

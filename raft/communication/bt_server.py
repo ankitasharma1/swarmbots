@@ -121,8 +121,8 @@ class BT_Server:
                 sleep(msg_delay)
                 return None
     
-    def debug_print(self, print_string):
-        if self.debug:
+    def debug_print(self, print_string, override=False):
+        if self.debug or override:
             time_string = strftime("%H:%M:%S", gmtime())
             id_string = f" {self.swarmer_id} Server: "
             print(time_string + id_string + print_string)
@@ -151,12 +151,12 @@ if __name__ == "__main__":
         try:
             for server in servers:
                 for client_addr in list(server.clients.keys()):
-                    print(f"Checking for messages from {BT_ADDR_DICT[client_addr]}")
+                    # print(f"Checking for messages from {BT_ADDR_DICT[client_addr]}")
                     msg = server.recv(client_addr)
                     if msg:
                         recv_counts[BT_ADDR_DICT[client_addr]] += 1
                         if recv_counts[BT_ADDR_DICT[client_addr]] % 100 == 0:
-                            server.debug_print(f"{recv_counts[BT_ADDR_DICT[client_addr]]} messages received from {BT_ADDR_DICT[client_addr]}")
+                            server.debug_print(f"{recv_counts[BT_ADDR_DICT[client_addr]]} messages received from {BT_ADDR_DICT[client_addr]}", True)
                     else:
                         print(f"No messages from {BT_ADDR_DICT[client_addr]}")
         except KeyboardInterrupt:
