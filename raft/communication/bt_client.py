@@ -91,30 +91,30 @@ class BT_Client:
 
 if __name__ == "__main__":
     # testing
-    from BT_CONFIG import BT_DICT
+    from BT_CONFIG import BT_DICT, S_IDS
     from SWARMER_ID import SWARMER_ID  # only exists locally
 
-    # change below if testing client for swarmer2
-    host = BT_DICT["S1"]["ADDR"]
-    port = BT_DICT["S1"]["PORT"]
-    # host = BT_DICT["S2"]["ADDR"]
-    # port = BT_DICT["S2"]["PORT"]
-    # host = BT_DICT["S3"]["ADDR"]
-    # port = BT_DICT["S3"]["PORT"]
-
-    c = BT_Client(SWARMER_ID, debug=True)
-    c.connect(host, port)
-    start = time()
-    while time() - start < 120:
-        print('inside client loop')
-        sleep(4)
-        c.send(f"hello from {SWARMER_ID} the time is {gmtime()}")
-        print("checking for messages")
-        msg = c.recv()
-        if msg:
-            print(msg)
+    clients = []
+    for s_id in S_IDS:
+        if s_id == SWARMER_ID:
+            print(f"Detected my s_id: {s_id}, not creating a client")
+            continue
         else:
-            print("no messages")
-        sleep(1)
-    c.clean_up()
-    print('goodbye.')
+            c = BT_Client(SWARMER_ID, True)
+            to_host = BT_DICT[s_id]["ADDR"]
+            to_port = BT_DICT[s_id][f"{SWARMER_ID}_PORT"]
+            c.connect(to_host, to_port)
+            clients.append(c)
+
+    msg = f"Hello from {SWARMER_ID}!!!"
+    for c in clients:
+        try:
+            c.send(msg)
+        except KeyboardInterrupt:
+            print("Keyboard interrupt detected. Stopping clients safely ...")
+            break
+
+    for c in clients:
+        c.clean_up()
+
+    print("Clients stopped safely. Goodbye.")

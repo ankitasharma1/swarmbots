@@ -31,7 +31,7 @@ BT_CONTROLLER_DICT = {
 
 BT_ADDR_DICT = {
     "B8:27:EB:19:6A:75": "S1",
-    "B8:27:EB:6A:D3:2D": "S2",
+    "B8:27:EB:89:EA:B7": "S2",
     "B8:27:EB:0D:A8:B9": "S3"
 }
 

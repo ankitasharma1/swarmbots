@@ -40,11 +40,11 @@ class BT_Server:
     def advertise(self):
         while True:
             self.debug_print(f"Advertising on {self.host}--{self.port}")
-            print(f"Advertising on {self.host}--{self.port}") # TODO: delete
+            # print(f"Advertising on {self.host}--{self.port}") # TODO: delete
             client_conn, client_info = self.bt_sock.accept()
             self.register_client(client_conn, client_info[0])
             self.debug_print(f"Connected to {client_info[0]}")
-            print(f"Connected to {client_info[0]}") # TODO: delete
+            # print(f"Connected to {client_info[0]}") # TODO: delete
             print(f">>> Connected to {client_info[0]}--{client_info[1]}")
 
     def register_client(self, client_conn, client_addr):
@@ -121,30 +121,33 @@ class BT_Server:
 
 if __name__ == "__main__":
     # testing
-    from BT_CONFIG import BT_DICT
+    from BT_CONFIG import BT_DICT, BT_ADDR_DICT, S_IDS
     from SWARMER_ID import SWARMER_ID
 
-    host = BT_DICT[SWARMER_ID]["ADDR"]
-    port = BT_DICT[SWARMER_ID]["PORT"]
+    servers = []
+    for s_id in S_IDS:
+        if s_id == SWARMER_ID:
+            print(f"Detected my s_id: {s_id}, not creating a server")
+            continue
+        else:
+            s = BT_Server(BT_DICT[SWARMER_ID]["ADDR"], BT_DICT[SWARMER_ID][f"{s_id}_PORT"], SWARMER_ID, True)
+            servers.append(s)
 
-    s = BT_Server(host, port, SWARMER_ID, True)
-    start = time()
-    while time() - start < 60:
-        print("Starting to check for messages ...")
-        for c in s.client_addresses():
-            if c not in s.clients:
-                print(f"{c} not connected")
-            else:
-                print(f"Checking for messages from {c}")
-                msg = s.recv(c)
-                if msg:
-                    print(f"Message from {c}: {msg}")
-                else:
-                    print(f"No message from {c}")
-                s.send(f"===== message from {SWARMER_ID}")
-                sleep(1)
-        print("Done checking messages")
-        sleep(1)
-    s.clean_up()
-    print("goodbye.")
+    while True:
+        try:
+            for server in servers:
+                for client_addr in list(server.clients.keys()):
+                    print(f"Checking for messages from {BT_ADDR_DICT[client_addr]}")
+                    msg = server.recv(client_addr)
+                    if msg:
+                        print(f"Received msg: {msg} from {BT_ADDR_DICT[client_addr]}")
+                    else:
+                        print(f"No messages from {BT_ADDR_DICT[client_addr]}")
+        except KeyboardInterrupt:
+            print("Keyboard interrupt detected. Stopping servers safely ...")
+            break
 
+    for s in servers:
+        s.clean_up()
+
+    print("Servers stopped safely. Goodbye.")
