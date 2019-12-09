@@ -26,6 +26,7 @@ def failsafe(func):
                 if type(e) == OSError or type(e) == IOError:
                     # OSError is raised when self.connect is what failed in the first place
                     # probably due to a timeout
+                    print(e)  # TODO: comment out
                     pass
                 else:
                     print(e)
@@ -58,7 +59,7 @@ class BT_Client:
                 self.bt_sock = BT.BluetoothSocket(BT.RFCOMM) 
                 sleep(3)
         self.connected = True
-        self.debug_print(f"Connected to {host} on port {port}")
+        self.debug_print(f"Connected to {host} on port {port}", True)
         return True
 
     @failsafe

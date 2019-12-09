@@ -1,5 +1,5 @@
 import bluetooth as BT
-from time import sleep, time, strftime, gmtime
+from time import sleep, strftime, gmtime
 from threading import Thread, Lock
 from select import select
 
@@ -16,7 +16,8 @@ class BT_Server:
         self.port = port
         self.swarmer_id = swarmer_id
         self.debug = debug
-        
+
+        self.bad_msg_ctr = {}
         self.clients = {}
         self.lock = Lock()
 
@@ -43,18 +44,23 @@ class BT_Server:
             # print(f"Advertising on {self.host}--{self.port}") # TODO: delete
             client_conn, client_info = self.bt_sock.accept()
             self.register_client(client_conn, client_info[0])
-            self.debug_print(f"Connected to {client_info[0]}")
-            # print(f"Connected to {client_info[0]}") # TODO: delete
-            print(f">>> Connected to {client_info[0]}--{client_info[1]}")
+            self.debug_print(f"Connected to {client_info[0]}--{client_info[1]}", True)
 
     def register_client(self, client_conn, client_addr):
         self.lock.acquire()
         self.clients[client_addr] = client_conn
+        self.bad_msg_ctr[client_addr] = 0
         self.lock.release()
     
     def remove_client(self, client_addr):
         self.lock.acquire()
-        self.clients.pop(client_addr, None)
+        client_conn = self.clients.pop(client_addr, None)
+        try:
+            client_conn.close()
+        except Exception as e:
+            self.debug_print(f"Exception raised during removal of client {client_addr}", True)
+            self.debug_print(f"{e}")
+        self.bad_msg_ctr.pop(client_addr, None)
         self.lock.release()
     
     # TODO: update calls after merge!!!
@@ -69,8 +75,8 @@ class BT_Server:
                     sleep(msg_delay)
                     return True
                 except Exception as e:
-                    self.debug_print("Error sending message")
-                    self.debug_print(f"{e}")
+                    self.debug_print("Error sending message", True)
+                    self.debug_print(f"{e}", True)
                     self.remove_client(addr)
                     sleep(msg_delay)
                     return False
@@ -88,8 +94,8 @@ class BT_Server:
                 sleep(msg_delay)
                 return True
             except Exception as e:
-                self.debug_print("Error sending message")
-                self.debug_print(f"{e}")
+                self.debug_print("Error sending message", True)
+                self.debug_print(f"{e}", True)
                 self.remove_client(client_addr)
                 sleep(msg_delay)
                 return False
@@ -110,13 +116,18 @@ class BT_Server:
                     sleep(msg_delay)
                     msg = data.decode('utf-8').rstrip()
                     self.debug_print(f"Received \"{msg}\" from {client_addr}")
+                    self.bad_msg_ctr[client_addr] = 0
                     return msg
                 else:
                     sleep(msg_delay)
+                    self.bad_msg_ctr[client_addr] += 1
+                    if self.bad_msg_ctr[client_addr] > 2:
+                        self.remove_client(client_addr)
+                        self.debug_print(f"Client has sent at least 3 empty messages, killed em", True)
                     return None
             except Exception as e:
-                self.debug_print("Error receiving message")
-                self.debug_print(f"{e}")
+                self.debug_print("Error receiving message", True)
+                self.debug_print(f"{e}", True)
                 self.remove_client(client_addr)
                 sleep(msg_delay)
                 return None
