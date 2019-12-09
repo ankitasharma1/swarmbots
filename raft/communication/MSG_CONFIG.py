@@ -4,7 +4,7 @@ PADDING_BYTE = b' '
 
 # socket config, this is how long the recv function will wait while checking
 # for messages
-RECV_TIMEOUT = 0.25  # seconds
+RECV_TIMEOUT = 0.2  # seconds
 
 # socket recv and send delay; we run into bandwidth issues over BT if we send
 # and check recv as fast as we can
