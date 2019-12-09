@@ -109,7 +109,7 @@ class Node:
             if s_id == self.swarmer_id:
                 continue
             c = BT_Client(self.swarmer_id, self.debug)
-            host = self.config_dict[self.swarmer_id]["ADDR"]
+            host = self.config_dict[s_id]["ADDR"]
             port = self.config_dict[s_id][f"{self.swarmer_id}_PORT"]
             thread_args = [c, host, port, s_id]
             t = Thread(target=self.handle_outgoing_conn, args=thread_args)
