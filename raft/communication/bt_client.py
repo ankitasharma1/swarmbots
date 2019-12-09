@@ -3,9 +3,9 @@ from time import sleep, gmtime, strftime
 from select import select
 
 if __name__ != '__main__':
-    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_SEND_DELAY, MSG_RECV_DELAY
+    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 else:
-    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_SEND_DELAY, MSG_RECV_DELAY
+    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 
 
 def failsafe(func):
@@ -63,25 +63,22 @@ class BT_Client:
         return True
 
     @failsafe
-    def send(self, msg, msg_delay=MSG_SEND_DELAY):
+    def send(self, msg):
         byte_msg = msg.encode('utf-8')
         padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
         self.bt_sock.sendall(padded_msg)
         self.debug_print(f"Message sent to {self.host}--{self.port}")
-        sleep(msg_delay)
         return True
     
     @failsafe
-    def recv(self, msg_timeout=RECV_TIMEOUT, msg_delay=MSG_RECV_DELAY, msg_size=MSG_SIZE):
+    def recv(self, msg_timeout=RECV_TIMEOUT, msg_size=MSG_SIZE):
         ready = select([self.bt_sock], [], [], msg_timeout)
         if ready[0]:
             data = self.bt_sock.recv(msg_size)
             msg = data.decode('utf-8').rstrip()
             self.debug_print(f"Received {msg}")
-            sleep(msg_delay)
             return msg
         else:
-            sleep(msg_delay)
             return None
     
     def debug_print(self, print_string, override=False):

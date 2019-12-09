@@ -64,7 +64,7 @@ class BT_Server:
         self.lock.release()
     
     # TODO: update calls after merge!!!
-    def send(self, msg, client_addr="any", msg_delay=MSG_SEND_DELAY):
+    def send(self, msg, client_addr="any"):
         if client_addr == "any":
             for addr, client in self.clients.items():
                 try:
@@ -72,18 +72,15 @@ class BT_Server:
                     padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
                     client.sendall(padded_msg)
                     self.debug_print(f"Message sent to {addr}")
-                    sleep(msg_delay)
                     return True
                 except Exception as e:
                     self.debug_print("Error sending message", True)
                     self.debug_print(f"{e}", True)
                     self.remove_client(addr)
-                    sleep(msg_delay)
                     return False
                 
         if client_addr not in self.clients:
             self.debug_print(f"Error sending message, {client_addr} not in clients dict")
-            sleep(msg_delay)
             return False
         else:
             try:
@@ -91,22 +88,19 @@ class BT_Server:
                 padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
                 self.clients[client_addr].sendall(padded_msg)
                 self.debug_print(f"Message sent to {client_addr}")
-                sleep(msg_delay)
                 return True
             except Exception as e:
                 self.debug_print("Error sending message", True)
                 self.debug_print(f"{e}", True)
                 self.remove_client(client_addr)
-                sleep(msg_delay)
                 return False
     
     def client_addresses(self):
         return list(self.clients.keys())
     
-    def recv(self, client_addr, msg_timeout=RECV_TIMEOUT, msg_delay=MSG_RECV_DELAY, msg_size=MSG_SIZE):
+    def recv(self, client_addr, msg_timeout=RECV_TIMEOUT, msg_size=MSG_SIZE):
         if client_addr not in self.clients:
             self.debug_print(f"Error receiving message, {client_addr} not in clients dict")
-            sleep(msg_delay)
             return False
         else:
             try:
@@ -116,10 +110,8 @@ class BT_Server:
                     msg = data.decode('utf-8').rstrip()
                     self.debug_print(f"Received {msg} from {client_addr}")
                     self.bad_msg_ctr[client_addr] = 0
-                    sleep(msg_delay)
                     return msg
                 else:
-                    sleep(msg_delay)
                     self.bad_msg_ctr[client_addr] += 1
                     if self.bad_msg_ctr[client_addr] > 1:
                         self.remove_client(client_addr)
@@ -129,7 +121,6 @@ class BT_Server:
                 self.debug_print("Error receiving message", True)
                 self.debug_print(f"{e}", True)
                 self.remove_client(client_addr)
-                sleep(msg_delay)
                 return False
     
     def debug_print(self, print_string, override=False):
