@@ -2,7 +2,7 @@
 CLUSTER_SIZE = 3
 
 # state config
-ELECTION_TIMEOUT = 7
+ELECTION_TIMEOUT = 5
 
 # states
 FOLLOWER = 'follower'
@@ -11,12 +11,12 @@ LEADER = 'leader'
 
 RAFT_DICT = {
     "S1": {
-        "FOLLOWER_TIMEOUT": 2
+        "FOLLOWER_TIMEOUT": 1
     },
     "S2": {
-        "FOLLOWER_TIMEOUT": 5
+        "FOLLOWER_TIMEOUT": 3
     },
     "S3": {
-        "FOLLOWER_TIMEOUT": 8
+        "FOLLOWER_TIMEOUT": 6
     }
 }
