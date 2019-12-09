@@ -8,6 +8,8 @@ from RAFT_CONFIG import CLUSTER_SIZE, FOLLOWER, CANDIDATE, LEADER, ELECTION_TIME
 
 old_time = time.time()
 
+should_print_ctr = 0
+
 
 def do_raft(node):
     # Election timeout.
@@ -21,13 +23,16 @@ def do_raft(node):
     leader_heartbeat = []
     response_vote = []    
 
+
     # Starts as a follower.
     node.old_state = FOLLOWER
     node.state = FOLLOWER
     
     global old_time
+    global should_print_ctr
 
     while True:
+        should_print_ctr += 1
         # Check if we have received any messages.
         for other_id in node.other_s_ids:
             msg = node.recv_from(other_id)
@@ -62,7 +67,7 @@ def do_raft(node):
         elif node.state == CANDIDATE:
             # A new candidate.        
             if node.old_state != node.state:
-                print(f"I am now a candidate for term {node.term}.") 
+                print(f"I am now a candidate for term {node.term}.")
                 # Clear queues if we are transitioning to a new state.
                 request_vote = []
                 leader_heartbeat = []
@@ -79,7 +84,7 @@ def do_raft(node):
         elif node.state == LEADER:
             # A new leader.
             if node.old_state != node.state:
-                print(f"I am now a leader for term {node.term}.")  
+                print(f"I am now a leader for term {node.term}.")
                 # Clear queues if we are transitioning to a new state.
                 request_vote = []
                 leader_heartbeat = []
@@ -97,6 +102,7 @@ def do_raft(node):
 def follower(node, request_vote, leader_heartbeat, election_timeout):
     # print(f">>> Follower State Term: {node.term}")
     global old_time
+    global should_print_ctr
     
     # Check whether the election timeout has elapsed.
     if (time.time() - old_time) > election_timeout:
@@ -107,7 +113,8 @@ def follower(node, request_vote, leader_heartbeat, election_timeout):
     else:
         # Check if we have correspondance from the leader.
         if len(leader_heartbeat) > 0:
-            print(">>> F: leader correspondance")
+            if should_print_ctr % 50 == 0:
+                print(">>> F: leader correspondance")
             leader_heartbeat_message = leader_heartbeat.pop(0)
             leader_term = int(leader_heartbeat_message['curr_term'])
             if leader_term >= node.term:
@@ -215,21 +222,25 @@ def candidate(node, request_vote, leader_heartbeat, response_vote, election_time
 
 
 def candidate_election_reset(node):
+    global should_print_ctr
     # Vote for self.
     node.voted_for = node.swarmer_id
     # Increment term.
     node.term = int(node.term) + 1
     # Send request votes to everyone.
-    print(f">>> Sending requests for votes to {node.other_s_ids}")
+    if should_print_ctr % 50 == 0:
+        print(f">>> Sending requests for votes to {node.other_s_ids}")
     node.send_to(node.other_s_ids, request_vote_msg(node.swarmer_id, node.term))
 
 
 def leader(node, leader_heartbeat, request_vote):
+    global should_print_ctr
     # print(f">>> Leader State term: {node.term}")
 
     # Process competing request vote.
     if len(request_vote) > 0:
-        print(">>> Received request vote")
+        if should_print_ctr % 50 == 0:
+            print(">>> Received request vote")
         request_vote_message = request_vote.pop(0)
         candidate_term = int(request_vote_message['curr_term'])
         candidate_id = request_vote_message['id']
@@ -254,7 +265,8 @@ def leader(node, leader_heartbeat, request_vote):
         leader_term = int(leader_heartbeat_message['curr_term'])
 
         if leader_term > node.term:
-            print(f">>> L: correspondance from leader with term {leader_term}--> follower") 
+            if should_print_ctr % 50 == 0:
+                print(f">>> L: correspondance from leader with term {leader_term}--> follower")
             node.term = leader_term  
             node.voted_for = None
             node.old_state = LEADER
@@ -262,7 +274,8 @@ def leader(node, leader_heartbeat, request_vote):
             return                             
 
     # Send leader heartbeats to everyone.
-    print(f">>> Sending heartbeat messages to {node.other_s_ids}")
+    if should_print_ctr % 50 == 0:
+        print(f">>> Sending heartbeat messages to {node.other_s_ids}")
     node.send_to(node.other_s_ids, leader_heartbeat_msg(node.swarmer_id, node.term))
         
     # At this point, our old_state is LEADER.                    

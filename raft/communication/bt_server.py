@@ -112,10 +112,6 @@ class BT_Server:
                     self.bad_msg_ctr[client_addr] = 0
                     return msg
                 else:
-                    # self.bad_msg_ctr[client_addr] += 1
-                    if self.bad_msg_ctr[client_addr] > 2:
-                        self.remove_client(client_addr)
-                        self.debug_print(f"Client has sent at least 3 empty messages, killed em")
                     return False
             except Exception as e:
                 self.debug_print("Error receiving message", True)
