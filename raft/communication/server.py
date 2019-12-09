@@ -1,15 +1,12 @@
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR, error
 from time import sleep, time, strftime, gmtime
 from threading import Thread, Lock
-from sys import exit
 from select import select
 
-PADDING_BTYE = b' '
-PADDING_SIZE = 0
-MSG_SIZE = 1024 # bytes
-RECV_TIMEOUT = .5 
+from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
 
-class Server():
+
+class Server:
     def __init__(self, host, port, swarmer_id, debug=False):
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.host = host
@@ -52,13 +49,13 @@ class Server():
         self.lock.release()
 
     def send(self, client_addr, msg):
-        if not client_addr in self.clients:
+        if client_addr not in self.clients:
             self.debug_print(f"Error sending message, {client_addr} not in clients dict")
             return False
         else:
             try:
                 byte_msg = msg.encode('utf-8')
-                padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
+                padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
                 self.clients[client_addr].send(padded_msg)
                 self.debug_print("Message sent.")
                 return True
@@ -71,12 +68,8 @@ class Server():
     def client_addresses(self):
         return list(self.clients.keys())
 
-    def get_client_name_local(self, client_addr):
-        self.send(client_addr, 'who are you?')
-        return self.recv(client_addr)
-
     def recv(self, client_addr, msg_timeout=RECV_TIMEOUT, msg_size=MSG_SIZE):
-        if not client_addr in self.clients:
+        if client_addr not in self.clients:
             self.debug_print(f"Error receiving message, {client_addr} not in dict")
             return None
         else:
@@ -84,10 +77,8 @@ class Server():
                 ready = select([self.clients[client_addr]], [], [], msg_timeout)
                 if ready[0]:
                     data = self.clients[client_addr].recv(msg_size)
-                    # TODO: This is a hack.
-                    if len(data) == PADDING_SIZE:
-                        # Raise socket error.
-                        raise error
+                    if not data:
+                        raise error  # socket sending empty bytes, raise socket.error to clear client connection
                     self.debug_print(f"Received {data}")
                     return data.decode('utf-8').rstrip()
                 else:
@@ -107,6 +98,7 @@ class Server():
         self.sock.shutdown(SHUT_RDWR)
         self.sock.close()
 
+
 if __name__ == '__main__':
     host = 'localhost'
     port = 5000
@@ -115,7 +107,7 @@ if __name__ == '__main__':
     while time() - start < 60:
         print("In client loop ...")
         for c in s.client_addresses():
-            if not c in s.clients:
+            if c not in s.clients:
                 print(f"{c} not connected")
             else:
                 print(f"Checking for messages from {c}")

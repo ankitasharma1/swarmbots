@@ -1,11 +1,12 @@
 import bluetooth as BT
-from time import sleep, gmtime, strftime, time
+from time import sleep, gmtime, strftime
 from select import select
 
-# TODO: put MSG_SIZE in global config file
-PADDING_BTYE = b' '
-MSG_SIZE = 1024 # bytes
-RECV_TIMEOUT = 0.25
+if __name__ != '__main__':
+    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+else:
+    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+
 
 def failsafe(func):
     def wrapper(*args, **kw_args):
@@ -25,6 +26,7 @@ def failsafe(func):
                 if type(e) == OSError or type(e) == IOError:
                     # OSError is raised when self.connect is what failed in the first place
                     # probably due to a timeout
+                    print(e)  # TODO: comment out
                     pass
                 else:
                     print(e)
@@ -33,7 +35,8 @@ def failsafe(func):
                 return
     return wrapper
 
-class BT_Client():
+
+class BT_Client:
     def __init__(self, swarmer_id, debug=False):
         self.bt_sock = BT.BluetoothSocket(BT.RFCOMM) 
         self.swarmer_id = swarmer_id
@@ -52,19 +55,19 @@ class BT_Client():
                 self.bt_sock.connect((host, port))
                 break
             except BT.btcommon.BluetoothError:
-                self.debug_print(f"Connection to server {host}:{port} unsuccessful, retrying in 3 seconds")
+                self.debug_print(f"Connection to server {host}--{port} unsuccessful, retrying in 3 seconds")
                 self.bt_sock = BT.BluetoothSocket(BT.RFCOMM) 
                 sleep(3)
         self.connected = True
-        self.debug_print(f"Connected to {host} on port {port}")
+        self.debug_print(f"Connected to {host} on port {port}", True)
         return True
 
     @failsafe
     def send(self, msg):
         byte_msg = msg.encode('utf-8')
-        padded_msg = byte_msg + bytearray(PADDING_BTYE * (MSG_SIZE - len(byte_msg)))
-        self.bt_sock.send(padded_msg)
-        self.debug_print("Message sent.")
+        padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
+        self.bt_sock.sendall(padded_msg)
+        self.debug_print(f"Message sent to {self.host}--{self.port}")
         return True
     
     @failsafe
@@ -72,12 +75,14 @@ class BT_Client():
         ready = select([self.bt_sock], [], [], msg_timeout)
         if ready[0]:
             data = self.bt_sock.recv(msg_size)
-            return data.decode('utf-8').rstrip()
+            msg = data.decode('utf-8').rstrip()
+            self.debug_print(f"Received {msg}")
+            return msg
         else:
             return None
     
-    def debug_print(self, print_string):
-        if self.debug:
+    def debug_print(self, print_string, override=False):
+        if self.debug or override:
             time_string = strftime("%H:%M:%S", gmtime())
             id_string = f" {self.swarmer_id} Client: "
             print(time_string + id_string + print_string)
@@ -86,32 +91,40 @@ class BT_Client():
         self.bt_sock.close()
         self.connected = False
 
+
 if __name__ == "__main__":
     # testing
-    from BT_CONFIG import UUID, BT_DICT, SWARMER_ADDR_DICT
-    from SWARMER_ID import SWARMER_ID
+    from BT_CONFIG import BT_DICT
+    from SWARMER_ID import SWARMER_ID  # only exists locally
+    import sys
 
-    # change below if testing client for swarmer2
-    host = BT_DICT["S1"]["ADDR"]
-    port = BT_DICT["S1"]["PORT"]
-    # host = BT_DICT["S2"]["ADDR"]
-    # port = BT_DICT["S2"]["PORT"]
-    # host = BT_DICT["S3"]["ADDR"]
-    # port = BT_DICT["S3"]["PORT"]
+    if len(sys.argv) < 2:
+        print("Usage: python3 bt_client [s_id to connect to]")
+        sys.exit(1)
 
-    c = BT_Client(SWARMER_ID, debug=True)
-    c.connect(host, port)
-    start = time()
-    while time() - start < 120:
-        print('inside client loop')
-        sleep(4)
-        c.send(f"hello from {SWARMER_ID} the time is {gmtime()}")
-        print("checking for messages")
-        msg = c.recv()
-        if msg:
-            print(msg)
-        else:
-            print("no messages")
-        sleep(1)
+    s_id = sys.argv[1]
+
+    if s_id not in BT_DICT:
+        print(f"Error: {s_id} not valid swarmer id: {list(BT_DICT.keys())}")
+        sys.exit(1)
+
+    c = BT_Client(SWARMER_ID)  # , True)
+    to_host = BT_DICT[s_id]["ADDR"]
+    to_port = BT_DICT[s_id][f"{SWARMER_ID}_PORT"]
+    c.connect(to_host, to_port)
+
+    msg = f"Hello from {SWARMER_ID}!!!"
+    sent_ctr = 0
+    while True:
+        try:
+            c.send(msg)
+            sent_ctr += 1
+            if sent_ctr % 100 == 0:
+                c.debug_print(f"{sent_ctr} messages sent.", True)
+        except KeyboardInterrupt:
+            print("Keyboard interrupt detected. Stopping clients safely ...")
+            break
+
     c.clean_up()
-    print('goodbye.')
+
+    print("Clients stopped safely. Goodbye.")
