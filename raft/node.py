@@ -137,14 +137,11 @@ class Node:
             msg = server.recv(addr)  # set message size here
             print(f"Received message {msg} from {s_id}")
             if msg:
-                print(f"========= {msg} ==========")
                 msg_dict = deserialize(msg)
                 if msg_dict:
                     self.server_lock.acquire()
                     self.incoming_msg_dict[s_id].append(msg)
                     self.server_lock.release()
-            print(f"{s_id} Server Recv sleeping now")
-            time.sleep(1)
 
     def handle_outgoing_conn(self, client, addr, port, s_id):
         print(f"Attempting to connect to {s_id}--{addr}--{port}")
@@ -161,8 +158,6 @@ class Node:
             self.client_lock.release()
             if msg:
                 client.send(msg)
-            print(f"{s_id} Client Send sleeping now")
-            time.sleep(1)
 
     def service_repl(self):
         while True:
@@ -177,7 +172,6 @@ class Node:
                 elif command == TERM:
                     print(self.term)
                 elif command == EXIT:
-                    self.server.clean_up()
                     print("Goodbye!")
                     return
                 else:
