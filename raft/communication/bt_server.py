@@ -4,9 +4,9 @@ from threading import Thread, Lock
 from select import select
 
 if __name__ != '__main__':
-    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_DELAY
 else:
-    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_DELAY
 
 
 class BT_Server:
@@ -66,11 +66,13 @@ class BT_Server:
                     padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
                     client.sendall(padded_msg)
                     self.debug_print(f"Message sent to {addr}")
+                    sleep(MSG_DELAY)
                     return True
                 except Exception as e:
                     self.debug_print("Error sending message")
                     self.debug_print(f"{e}")
                     self.remove_client(addr)
+                    sleep(MSG_DELAY)
                     return False
                 
         if client_addr not in self.clients:
@@ -95,19 +97,24 @@ class BT_Server:
     def recv(self, client_addr, msg_timeout=RECV_TIMEOUT, msg_size=MSG_SIZE):
         if client_addr not in self.clients:
             self.debug_print(f"Error receiving message, {client_addr} not in clients dict")
+            sleep(MSG_DELAY)
             return None
         else:
             try:
                 ready = select([self.clients[client_addr]], [], [], msg_timeout)
                 if ready[0]:
                     data = self.clients[client_addr].recv(msg_size)
+                    sleep(MSG_DELAY)
                     return data.decode('utf-8').rstrip()
                 else:
+                    sleep(MSG_DELAY)
                     return None
             except Exception as e:
                 self.debug_print("Error receiving message")
                 self.debug_print(f"{e}")
                 self.remove_client(client_addr)
+                sleep(MSG_DELAY)
+                return None
     
     def debug_print(self, print_string):
         if self.debug:

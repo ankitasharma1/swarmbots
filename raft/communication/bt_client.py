@@ -3,9 +3,9 @@ from time import sleep, gmtime, strftime
 from select import select
 
 if __name__ != '__main__':
-    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_DELAY
 else:
-    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT
+    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_DELAY
 
 
 def failsafe(func):
@@ -67,6 +67,7 @@ class BT_Client:
         padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
         self.bt_sock.sendall(padded_msg)
         self.debug_print(f"Message sent to {self.host}--{self.port}")
+        sleep(MSG_DELAY)
         return True
     
     @failsafe
@@ -74,8 +75,10 @@ class BT_Client:
         ready = select([self.bt_sock], [], [], msg_timeout)
         if ready[0]:
             data = self.bt_sock.recv(msg_size)
+            sleep(MSG_DELAY)
             return data.decode('utf-8').rstrip()
         else:
+            sleep(MSG_DELAY)
             return None
     
     def debug_print(self, print_string):
