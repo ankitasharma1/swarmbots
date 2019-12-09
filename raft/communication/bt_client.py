@@ -3,9 +3,9 @@ from time import sleep, gmtime, strftime
 from select import select
 
 if __name__ != '__main__':
-    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_DELAY
+    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_SEND_DELAY, MSG_RECV_DELAY
 else:
-    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_DELAY
+    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_SEND_DELAY, MSG_RECV_DELAY
 
 
 def failsafe(func):
@@ -62,7 +62,7 @@ class BT_Client:
         return True
 
     @failsafe
-    def send(self, msg, msg_delay=MSG_DELAY):
+    def send(self, msg, msg_delay=MSG_SEND_DELAY):
         byte_msg = msg.encode('utf-8')
         padded_msg = byte_msg + bytearray(PADDING_BYTE * (MSG_SIZE - len(byte_msg)))
         self.bt_sock.sendall(padded_msg)
@@ -71,7 +71,7 @@ class BT_Client:
         return True
     
     @failsafe
-    def recv(self, msg_timeout=RECV_TIMEOUT, msg_delay=MSG_DELAY, msg_size=MSG_SIZE):
+    def recv(self, msg_timeout=RECV_TIMEOUT, msg_delay=MSG_RECV_DELAY, msg_size=MSG_SIZE):
         ready = select([self.bt_sock], [], [], msg_timeout)
         if ready[0]:
             data = self.bt_sock.recv(msg_size)
@@ -110,15 +110,19 @@ if __name__ == "__main__":
         print(f"Error: {s_id} not valid swarmer id: {list(BT_DICT.keys())}")
         sys.exit(1)
 
-    c = BT_Client(SWARMER_ID, True)
+    c = BT_Client(SWARMER_ID)  # , True)
     to_host = BT_DICT[s_id]["ADDR"]
     to_port = BT_DICT[s_id][f"{SWARMER_ID}_PORT"]
     c.connect(to_host, to_port)
 
     msg = f"Hello from {SWARMER_ID}!!!"
+    sent_ctr = 0
     while True:
         try:
             c.send(msg)
+            sent_ctr += 1
+            if sent_ctr % 100 == 0:
+                c.debug_print(f"{sent_ctr} messages sent.")
         except KeyboardInterrupt:
             print("Keyboard interrupt detected. Stopping clients safely ...")
             break

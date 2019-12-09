@@ -4,9 +4,9 @@ from threading import Thread, Lock
 from select import select
 
 if __name__ != '__main__':
-    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_DELAY
+    from .MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_SEND_DELAY, MSG_RECV_DELAY
 else:
-    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_DELAY
+    from MSG_CONFIG import PADDING_BYTE, MSG_SIZE, RECV_TIMEOUT, MSG_SEND_DELAY, MSG_RECV_DELAY
 
 
 class BT_Server:
@@ -58,7 +58,7 @@ class BT_Server:
         self.lock.release()
     
     # TODO: update calls after merge!!!
-    def send(self, msg, client_addr="any", msg_delay=MSG_DELAY):
+    def send(self, msg, client_addr="any", msg_delay=MSG_SEND_DELAY):
         if client_addr == "any":
             for addr, client in self.clients.items():
                 try:
@@ -97,7 +97,7 @@ class BT_Server:
     def client_addresses(self):
         return list(self.clients.keys())
     
-    def recv(self, client_addr, msg_timeout=RECV_TIMEOUT, msg_delay=MSG_DELAY, msg_size=MSG_SIZE):
+    def recv(self, client_addr, msg_timeout=RECV_TIMEOUT, msg_delay=MSG_RECV_DELAY, msg_size=MSG_SIZE):
         if client_addr not in self.clients:
             self.debug_print(f"Error receiving message, {client_addr} not in clients dict")
             sleep(msg_delay)
@@ -137,12 +137,14 @@ if __name__ == "__main__":
     from SWARMER_ID import SWARMER_ID
 
     servers = []
+    recv_counts = {}
     for s_id in S_IDS:
         if s_id == SWARMER_ID:
             print(f"Detected my s_id: {s_id}, not creating a server")
             continue
         else:
-            s = BT_Server(BT_DICT[SWARMER_ID]["ADDR"], BT_DICT[SWARMER_ID][f"{s_id}_PORT"], SWARMER_ID, True)
+            recv_counts[s_id] = 0
+            s = BT_Server(BT_DICT[SWARMER_ID]["ADDR"], BT_DICT[SWARMER_ID][f"{s_id}_PORT"], SWARMER_ID)
             servers.append(s)
 
     while True:
@@ -151,7 +153,11 @@ if __name__ == "__main__":
                 for client_addr in list(server.clients.keys()):
                     print(f"Checking for messages from {BT_ADDR_DICT[client_addr]}")
                     msg = server.recv(client_addr)
-                    if not msg:
+                    if msg:
+                        recv_counts[BT_ADDR_DICT[client_addr]] += 1
+                        if recv_counts[BT_ADDR_DICT[client_addr]] % 100 == 0:
+                            server.debug_print(f"{recv_counts[BT_ADDR_DICT[client_addr]]} messages received from {BT_ADDR_DICT[client_addr]}")
+                    else:
                         print(f"No messages from {BT_ADDR_DICT[client_addr]}")
         except KeyboardInterrupt:
             print("Keyboard interrupt detected. Stopping servers safely ...")
