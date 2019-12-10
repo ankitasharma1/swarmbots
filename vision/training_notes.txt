@@ -1,0 +1,40 @@
+============== 1. Create the raw positive and negative data =============
+# Positives should contain the object(s) that we want to recognize (labeled later)
+# Negatives should not contain the objects that we want to recognize
+# More negatives is both easier to do and results in better object detection
+python3 capture_video.py <dest dir>
+
+============== 2. Label the data =============
+# To annotate (draw bounding boxes) of images at data/positives, storing the
+# results in annotations.txt
+opencv_annotation --images data/positives --annotations annotations.txt
+
+============== 3. Create the positive samples =============
+# Info at: https://docs.opencv.org/2.4/doc/user_guide/ug_traincascade.html
+# Once the positive images are annotated, we'll need to create the .vec file
+# which will contain the actual samples to be loaded by the classifier used in the
+# python code. We do this because opencv_createsamples creates distortions of the
+# positive images and places it within the negatives, allowing us to create an
+# even more diverse set of training data for our classifier
+#	-info : the annotations file created by the previous step
+#	-bg  : a file where each line describes a path to a negative image we'd like to use
+#			(these will be used as the background to the distorted positive images)
+#	-w,-h : the width and height or the output sample image (TODO: make bigger)
+#	-num : the number of positive image samples we'd like to create (should be around equal
+#		to the number of bounding boxes we have in the annotations file
+opencv_createsamples -num 500 -vec samples.vec -info annotations.txt -bg negatives.txt -w 20 -h 20
+
+============== 3. Create the negative samples =============
+python 
+# Once the .vec file and negatives list has been created, we can now begin training.
+# (We'll be using LBP, which is faster than HAAR, for the training algorithm)
+# -featureType : which types of sample vectors for which algorighm we want to make
+# -w,-h : the size of the sample vectors (?)
+# -numPos : the number of positive images/samples we used (should be 85% percent of the 
+#             actual number of positives we had)
+# -data : directory where the result .xml files are stored
+# -bg : file whose lines are each a path to a negative image
+# -acceptanceRatioBreakValue : the training calculates and tries to minimize an error -- once
+#             that error is below this value we stop
+# -vec : the file containing the sample vectors created in the last step
+opencv_traincascade -featureType LBP -w 20 -h 20 -numPos 425 -data training_res -bg negatives.txt -acceptanceRatioBreakValue .00001 -vec samples.vec
