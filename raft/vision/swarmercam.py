@@ -80,7 +80,9 @@ class SwarmerCam(object):
 
 # For testing
 def main():
-	sc = SwarmerCam("../data/cascade/cascade.xml")
+	#  sc = SwarmerCam("training_results/trained_orange/cascade.xml")
+	sc = SwarmerCam("training_results/trained_yellow/cascade.xml")
+	sc = SwarmerCam("training_results/trained_blue/cascade.xml")
 	while True:
 		print(sc.pollCameraForBot(debug=True))
 

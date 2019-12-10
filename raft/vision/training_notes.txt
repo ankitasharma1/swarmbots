@@ -47,5 +47,5 @@ python
 # sudo /etc/init.d/dphys-swapfile stop
 # sudo /etc/init.d/dphys-swapfile start
 opencv_traincascade -featureType LBP -w 20 -h 20 -numPos 1050 -data training_results/trained_orange -bg negatives.txt -acceptanceRatioBreakValue .00001 -vec samples/orange_samples.vec
-opencv_traincascade -featureType LBP -w 20 -h 20 -numPos 1550 -data training_results/trained_yellow -bg negatives.txt -acceptanceRatioBreakValue .00001 -vec samples/yellow_samples.vec
-opencv_traincascade -featureType LBP -w 20 -h 20 -numPos 1750 -data training_results/trained_blue -bg negatives.txt -acceptanceRatioBreakValue .00001 -vec samples/blue_samples.vec
+opencv_traincascade -featureType LBP -w 20 -h 20 -numPos 1400 -data training_results/trained_yellow -bg negatives.txt -acceptanceRatioBreakValue .00001 -vec samples/yellow_samples.vec
+opencv_traincascade -featureType LBP -w 20 -h 20 -numPos 1650 -data training_results/trained_blue -bg negatives.txt -acceptanceRatioBreakValue .00001 -vec samples/blue_samples.vec
