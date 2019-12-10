@@ -6,7 +6,7 @@ from communication.BT_CONFIG import BT_ADDR_DICT, BT_CONTROLLER_DICT
 from communication.SWARMER_ID import SWARMER_ID
 
 from motor.motor_driver import MotorDriver
-from motor.MOTOR_CONFIG import THROTTLE, RUN_TIME, MSG_SIZE
+from motor.MOTOR_CONFIG import THROTTLE, RUN_TIME
 
 
 # This file should be run on the bot and connect to the server running on the
