@@ -9,6 +9,10 @@ if len(sys.argv) < 2:
 	print("Usage: {} <dest_dir>".format(sys.argv[0]))
 	sys.exit(1)
 
+destDir = os.path.join(sys.argv[1])
+if not os.path.exists(destDir):
+        os.makedirs(destDir)
+
 camera = PiCamera()
 camera.resolution = (640, 480) # Too big = choppy 
 camera.framerate = 32
@@ -46,7 +50,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 # enumerated images
 camera.start_preview()
 try:
-	for filename in camera.capture_continuous(os.path.join(sys.argv[1],'img{counter:03d}.jpg'), format="jpeg", use_video_port=True):
+	for filename in camera.capture_continuous(destDir,'img{counter:03d}.jpg', format="jpeg", use_video_port=True):
 		print(filename)
 		key = cv2.waitKey(1) & 0xFF
 		if key == ord("q"):
