@@ -38,7 +38,7 @@ class SwarmerCam(object):
 		Note that (0,0) in our (and opencv's) view is the 
 		top-left of the image frame
 	"""
-	def pollCameraForLeader(self, debug=False):
+	def pollCameraForBot(self, debug=False):
 		# Capture a frame from the camera
 		ret, frame = self.video_capture.read()
 		camera_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) # TODO: Would non-gray be better?
@@ -82,7 +82,7 @@ class SwarmerCam(object):
 def main():
 	sc = SwarmerCam("../data/cascade/cascade.xml")
 	while True:
-		print(sc.pollCameraForLeader(debug=True))
+		print(sc.pollCameraForBot(debug=True))
 
 if __name__ == '__main__':
 	main()
