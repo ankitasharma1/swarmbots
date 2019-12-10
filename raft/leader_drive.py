@@ -6,7 +6,7 @@ from communication.BT_CONFIG import BT_ADDR_DICT, BT_CONTROLLER_DICT
 from communication.SWARMER_ID import SWARMER_ID
 
 from motor.motor_driver import MotorDriver
-from motor.MOTOR_CONFIG import THROTTLE, RUN_TIME, MSG_SIZE
+from motor.MOTOR_CONFIG import THROTTLE, RUN_TIME
 
 
 # This file should be run on the bot and connect to the server running on the
@@ -30,11 +30,15 @@ class LeaderDriving:
         t.start()
 
     def _drive(self):
+        none_ctr = 0
         while self.on:
-            cmd = self.client.recv(msg_timeout=0.15)
+            cmd = self.client.recv(msg_timeout=0.3)
             if not self.debounce():
                 if cmd == None:  # this has to be None else it will match b' '
-                    self.motor.stop()
+                    none_ctr += 1
+                    if none_ctr > 2:
+                        self.motor.stop()
+                        none_ctr = 0
                 if cmd == 'forward':
                     self.motor.forward()
                 if cmd == 'backward':
@@ -66,16 +70,12 @@ if __name__ == '__main__':
     from time import sleep
     
     l = LeaderDriving(True)
-    print("driving")
-    l.drive()
-    sleep(60)
-    print("stopping for testing")
-    l.stop(True)
-    sleep(20)
-    print("driving")
-    l.drive()
-    sleep(60)
-    print("stopping and cleaning up")
-    l.stop()
-    print("goodbye")
+    try:
+        l.drive()
+        while True:
+            sleep(120)
+            print("Still alive")
+    except KeyboardInterrupt:
+        l.stop()
+        print("Goodbye")
 
