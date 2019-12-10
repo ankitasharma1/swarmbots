@@ -1,0 +1,51 @@
+============== 1. Create the raw positive and negative data =============
+# Positives should contain the object(s) that we want to recognize (labeled later)
+# Negatives should not contain the objects that we want to recognize
+# More negatives is both easier to do and results in better object detection
+python3 capture_video.py <dest dir>
+
+============== 2. Label the data =============
+# To annotate (draw bounding boxes) of images at data/positives, storing the
+# results in annotations.txt
+opencv_annotation --images=$(pwd)/positives/positives_blue --annotations=$(pwd)/annotations/annotations_blue.txt
+
+============== 3. Create the positive samples =============
+# Info at: https://docs.opencv.org/2.4/doc/user_guide/ug_traincascade.html
+# Once the positive images are annotated, we'll need to create the .vec file
+# which will contain the actual samples to be loaded by the classifier used in the
+# python code. We do this because opencv_createsamples creates distortions of the
+# positive images and places it within the negatives, allowing us to create an
+# even more diverse set of training data for our classifier
+#	-info : the annotations file created by the previous step
+#	-bg  : a file where each line describes a path to a negative image we'd like to use
+#			(these will be used as the background to the distorted positive images)
+#	-w,-h : the width and height or the output sample image (TODO: make bigger)
+#	-num : the number of positive image samples we'd like to create (should be around equal
+#		to the number of bounding boxes we have in the annotations file
+# NOTE: createsamples doesn't like it when there are multiple bounding boxes within an image,
+# at least in our case
+opencv_createsamples -num 1100 -vec samples/orange_samples.vec -info annotations/annotations_orange.txt -bg negatives.txt -w 20 -h 20
+opencv_createsamples -num 1600 -vec samples/yellow_samples.vec -info annotations/annotations_yellow.txt -bg negatives.txt -w 20 -h 20
+opencv_createsamples -num 1800 -vec samples/blue_samples.vec -info annotations/annotations_blue.txt -bg negatives.txt -w 20 -h 20
+
+============== 3. Create the negative samples =============
+python 
+# Once the .vec file and negatives list has been created, we can now begin training.
+# (We'll be using LBP, which is faster than HAAR, for the training algorithm)
+# -featureType : which types of sample vectors for which algorighm we want to make
+# -w,-h : the size of the sample vectors (?)
+# -numPos : the number of positive images/samples we used (should be 85% percent of the 
+#             actual number of positives we had)
+# -data : directory where the result .xml files are stored
+# -bg : file whose lines are each a path to a negative image
+# -acceptanceRatioBreakValue : the training calculates and tries to minimize an error -- once
+#             that error is below this value we stop
+# -vec : the file containing the sample vectors created in the last step
+# NOTE: You might want to (sudo) edit /etc/dphys-swapfile to increase CONF_SWAPSIZE to 2048, to account for
+# potential memory issues
+# After doing so, run:
+# sudo /etc/init.d/dphys-swapfile stop
+# sudo /etc/init.d/dphys-swapfile start
+opencv_traincascade -featureType LBP -w 20 -h 20 -numPos 1050 -data training_results/trained_orange -bg negatives.txt -acceptanceRatioBreakValue .00001 -vec samples/orange_samples.vec
+opencv_traincascade -featureType LBP -w 20 -h 20 -numPos 1400 -data training_results/trained_yellow -bg negatives.txt -acceptanceRatioBreakValue .00001 -vec samples/yellow_samples.vec
+opencv_traincascade -featureType LBP -w 20 -h 20 -numPos 1650 -data training_results/trained_blue -bg negatives.txt -acceptanceRatioBreakValue .00001 -vec samples/blue_samples.vec
