@@ -20,6 +20,8 @@ __TODO:__
 
 Install `Python 3.x.x`
 
+Run ./scripts/main_script.sh to kick off bash scripts on each pi.
+
 ## Hardware
 
 ## Software

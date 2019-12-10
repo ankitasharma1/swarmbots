@@ -15,7 +15,6 @@ class FollowerDriving:
         self.motor = MotorDriver(THROTTLE)
         self.on = False
         self.swarmer_cam = SwarmerCam("blue", "orange", "yellow")
-        self.last_time = 0.0
 
     def drive(self):
         self.on = True
@@ -25,17 +24,27 @@ class FollowerDriving:
 
     def _drive(self):
         while self.on:
-            if not self.debounce():
-                # If a leader marker is detected, classifier returns
-                # (x-off, y-off) negative x-off: left, negative y-off: above the center
-                res = self.swarmer_cam.pollCameraForBot()
-                if res:
+            # Get score from RSSI.
+            rssi_score = get_rssi_score()
+            # Too Close.
+            if rssi_score == 1:
+                self.motor.backward()
+            # Too Far.
+            if rssi_score == 3:
+                # Orient.
+                i = 0
+                while i < 3:
+                    res = self.swarmer_cam.pollCameraForBot()
                     x_coord = res[0]
+                    # Left
                     if x_coord < 0:
                         self.motor.orient_left()
-                    elif x_coord > 0:
+                    # Right
+                    else:
                         self.motor.orient_right()
-                self.last_time = time()
+                    i += 1
+            time.sleep(5)
+            self.motor.stop()
     
     def stop(self, testing=False):
         # testing allows stopping and starting without killing the conn
@@ -44,13 +53,6 @@ class FollowerDriving:
         self.motor.stop()
         if not testing:
             self.client.clean_up()
-
-    def debounce(self):
-        elapsed_time = time() - self.last_time
-        if elapsed_time > RUN_TIME:
-            return False
-        else:
-            return True            
     
 
 if __name__ == '__main__':
