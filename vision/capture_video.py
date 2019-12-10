@@ -50,7 +50,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 # enumerated images
 camera.start_preview()
 try:
-	for filename in camera.capture_continuous(destDir,'img{counter:03d}.jpg', format="jpeg", use_video_port=True):
+	for filename in camera.capture_continuous(os.path.join(destDir,'img{counter:03d}.jpg'), format="jpeg", use_video_port=True):
 		print(filename)
 		key = cv2.waitKey(1) & 0xFF
 		if key == ord("q"):
