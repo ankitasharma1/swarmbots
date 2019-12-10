@@ -7,7 +7,7 @@ python3 capture_video.py <dest dir>
 ============== 2. Label the data =============
 # To annotate (draw bounding boxes) of images at data/positives, storing the
 # results in annotations.txt
-opencv_annotation --images data/positives --annotations annotations.txt
+opencv_annotation --images=$(pwd)/positives_blue --annotations=$(pwd)/annotations_blue.txt
 
 ============== 3. Create the positive samples =============
 # Info at: https://docs.opencv.org/2.4/doc/user_guide/ug_traincascade.html
