@@ -1,5 +1,5 @@
-from threading import Thread, Lock
-from time import time, sleep
+from threading import Thread
+from time import time
 
 from communication.bt_client import BT_Client
 from communication.BT_CONFIG import BT_ADDR_DICT, BT_CONTROLLER_DICT
@@ -8,9 +8,10 @@ from communication.SWARMER_ID import SWARMER_ID
 from motor.motor_driver import MotorDriver
 from motor.MOTOR_CONFIG import THROTTLE, RUN_TIME, MSG_SIZE
 
+
 # This file should be run on the bot and connect to the server running on the
 # the controller
-class LeaderDriving():
+class LeaderDriving:
     def __init__(self, debug=False):
         self.motor = MotorDriver(THROTTLE)
         self.client = BT_Client(SWARMER_ID, debug) 
@@ -32,7 +33,7 @@ class LeaderDriving():
         while self.on:
             cmd = self.client.recv(msg_timeout=0.15)
             if not self.debounce():
-                if cmd == None: # this has to be None else it will match b' '
+                if cmd == None:  # this has to be None else it will match b' '
                     self.motor.stop()
                 if cmd == 'forward':
                     self.motor.forward()
@@ -59,6 +60,7 @@ class LeaderDriving():
             return False
         else:
             return True
+
 
 if __name__ == '__main__':
     from time import sleep

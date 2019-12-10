@@ -4,7 +4,8 @@ import struct
 import array
 import fcntl
 
-from BT_CONFIG import BT_DICT
+from .BT_CONFIG import BT_DICT
+
 
 class BT_RSSI(object):
     def __init__(self):
@@ -66,6 +67,7 @@ class BT_RSSI(object):
             self.remove_sock(swarmer_id)
             self.connect(swarmer_id)
             return self.request_rssi(swarmer_id)
+
 
 if __name__ == '__main__':
     # s_id = 'S1'

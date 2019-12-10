@@ -1,5 +1,6 @@
 from adafruit_motorkit import MotorKit
 
+
 def failsafe(func):
     def wrapper(*args, **kw_args):
         try:
@@ -11,7 +12,8 @@ def failsafe(func):
             print("ERROR: motor failure detected, motors shutdown")
     return wrapper
 
-class MotorDriver():
+
+class MotorDriver:
     def __init__(self, throttle):
         self.kit = MotorKit()
         self.throttle = throttle
@@ -37,13 +39,23 @@ class MotorDriver():
         self.kit.motor2.throttle = -1 * self.throttle
 
     @failsafe
+    def orient_right(self):
+        self.kit.motor1.throttle = self.throttle
+        self.kit.motor2.throttle = -1 * self.throttle        
+
+    @failsafe
+    def orient_left(self):
+        self.kit.motor1.throttle = -1 * self.throttle
+        self.kit.motor2.throttle = self.throttle               
+
+    @failsafe
     def stop(self):
         self.kit.motor1.throttle = 0
         self.kit.motor2.throttle = 0
    
 
 if __name__ == '__main__':
-    from MOTOR_CONFIG import THROTTLE, RUN_TIME
+    from .MOTOR_CONFIG import THROTTLE
     from time import sleep
    
     # test

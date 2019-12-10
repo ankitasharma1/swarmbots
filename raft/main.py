@@ -1,5 +1,4 @@
 import sys
-from time import sleep
 from node import Node
 
 # Check command line arguments.
@@ -10,7 +9,7 @@ if len(sys.argv) != 2:
 # Unique node id.
 node_id = sys.argv[1]
 
-n = Node(node_id, wifi=True, debug=True)
+n = Node(node_id, wifi=False, debug=False)
 
 # Node 'init' routine.
 n.init()

@@ -1,42 +1,35 @@
 import sys
-import threading
-from threading import Thread
-import socket
+from threading import Thread, Lock
 import time
 
-# import states
+from states import do_raft
 
 from communication.server import Server
 from communication.client import Client
 from communication.bt_server import BT_Server
 from communication.bt_client import BT_Client
 
-from WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
-from communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT
+from communication.WIFI_CONFIG import WIFI_DICT, WIFI_ADDRESSES, WIFI_ADDR_DICT
+from communication.BT_CONFIG import BT_DICT, BT_ADDRESSES, BT_ADDR_DICT, S_IDS
 
-MSG_SIZE = 1024 # bytes
+from communication.message import deserialize
+from communication.MSG_CONFIG import MSG_SEND_DELAY, MSG_RECV_DELAY
 
-"""
-Cluster Info
-"""
-CLUSTER_SIZE = 3
-NUM_EXT_CONNS = 2
+from RAFT_CONFIG import RAFT_DICT
 
 """
-Commands
+REPL Commands
 """
 EXIT = 'e'
 HELP = 'h'
 STATE = 's'
 TERM = 't'
 
-"""
-States
-"""
-JOIN = 'join'
-import json
+# prevent overuse of CPU by adding small sleeps
+OVERUSE_DELAY = 0
 
-class Node():
+
+class Node:
     def __init__(self, swarmer_id, wifi=False, debug=False):
         print(f"Creating Node: {swarmer_id}")
         self.swarmer_id = swarmer_id
@@ -51,29 +44,25 @@ class Node():
             self.all_addresses = BT_ADDRESSES
             self.addr_dict = BT_ADDR_DICT
 
-        self.host = self.config_dict[swarmer_id]["ADDR"]
-        self.port = self.config_dict[swarmer_id]["PORT"]
-
-        if wifi:
-            self.server = Server(self.host, self.port, swarmer_id, debug)
-        else:
-            self.server = BT_Server(self.host, self.port, swarmer_id, debug)
-
         self.client_count = 0
 
         # Message queues, needs locking in each server thread
-        self.incoming_messages = [[] for _ in range(len(self.config_dict))]
-        self.outgoing_messages = [[] for _ in range(len(self.config_dict))]
+        self.incoming_msg_dict = {s_id: [] for s_id in S_IDS}
+        self.outgoing_msg_dict = {s_id: [] for s_id in S_IDS}
+        # self.incoming_messages = [[] for _ in range(len(self.config_dict))]
+        # self.outgoing_messages = [[] for _ in range(len(self.config_dict))]
 
-        # Basic synchronization is required to kep track of alive/closed sockets.
-        self.server_thread = None
+        # Basic synchronization is required to keep track of alive/closed sockets.
+        self.server_threads = []
         self.client_threads = []
-        self.server_lock = threading.Lock()
-        self.client_lock = threading.Lock()
+        self.server_lock = Lock()
+        self.client_lock = Lock()
+        # self.send_lock = Lock()
+        # self.recv_lock = Lock()
 
         # Raft info
-        self.seed = self.config_dict[swarmer_id]["SEED"]
-        self.state = JOIN
+        self.follow_timeout = RAFT_DICT[swarmer_id]["FOLLOWER_TIMEOUT"]
+        self.state = 'join'
         self.old_state = ""        
         self.term = 0
         self.voted_for = None
@@ -85,53 +74,56 @@ class Node():
         self.service_incoming_conns()
         self.service_outgoing_conns()
 
-        while (self.client_count < 2) or (len(self.server.clients) < 2):
-            time.sleep(0.05)
-            #print("Waiting for servers to connect ...")
+        print("init before cluster connect guard")
+
+        while self.client_count < 2:
+            time.sleep(0.2)
+
+        print("init after cluster connect guard")
 
         t = Thread(target=self.start_raft)
         t.setDaemon(True)
         t.start()
 
-        """
-        Kick off REPL.
-        """
-        self.service_repl() 
+        print("raft started, starting REPL")
 
-    # def start_raft(self):
-    #    states.do_raft(self)
+        self.service_repl()
+
+    def start_raft(self):
+        print("Starting Raft")
+        do_raft(self)
 
     def send_to(self, client_id_list, msg):
         for c_id in client_id_list:
             if c_id == self.swarmer_id:
                 continue
-            shared_q_index = self.config_dict[c_id]['SHARED_Q_INDEX']
             self.client_lock.acquire()
-            self.outgoing_messages[shared_q_index].append(msg)
+            # print(f">>> Qeueing {msg} to send to {c_id}")
+            self.outgoing_msg_dict[c_id].append(msg)
             self.client_lock.release()
+        time.sleep(MSG_SEND_DELAY)
 
     def recv_from(self, server_id):
         if server_id != self.swarmer_id:        
-            q_idx = self.config_dict[server_id]['SHARED_Q_INDEX']
             msg = None
             self.server_lock.acquire()
-            if len(self.incoming_messages[q_idx]) > 0:
-                msg = self.incoming_messages[q_idx].pop(0)
-                #print(f"Received msg from {server_id}: {msg}")
+            if len(self.incoming_msg_dict[server_id]) > 0:
+                msg = self.incoming_msg_dict[server_id].pop(0)
             self.server_lock.release()
-            return msg
+            if msg:
+                return deserialize(msg)
+            else:
+                return None
 
     def service_outgoing_conns(self):
         print("Establishing outgoing connections")
-        print(f"Debug status: {self.debug}")
-        for k,v in self.config_dict.items():
-            if k == self.swarmer_id:
+        for s_id in S_IDS:
+            if s_id == self.swarmer_id:
                 continue
-            if self.wifi:
-                c = Client(k, self.debug)
-            else:
-                c = BT_Client(k, self.debug)
-            thread_args = [c, v['ADDR'], v['PORT'], v['SHARED_Q_INDEX']]
+            c = BT_Client(self.swarmer_id, self.debug)
+            host = self.config_dict[s_id]["ADDR"]
+            port = self.config_dict[s_id][f"{self.swarmer_id}_PORT"]
+            thread_args = [c, host, port, s_id]
             t = Thread(target=self.handle_outgoing_conn, args=thread_args)
             t.setDaemon(True)
             t.start()
@@ -139,78 +131,41 @@ class Node():
 
     def service_incoming_conns(self):
         print("Establishing incoming connections")
-        for k,v in self.config_dict.items():
-            if k == self.swarmer_id:
+        for s_id in S_IDS:
+            if s_id == self.swarmer_id:
                 continue
-            thread_args = [self.server]
+            host = self.config_dict[self.swarmer_id]["ADDR"]
+            port = self.config_dict[self.swarmer_id][f"{s_id}_PORT"]
+            s = BT_Server(host, port, self.swarmer_id, self.debug)
+            thread_args = [s, s_id]
             t = Thread(target=self.handle_incoming_conn, args=thread_args)
             t.setDaemon(True)
             t.start()
-            self.server_thread = t
+            self.server_threads.append(t)
 
-    def handle_incoming_conn(self, server):
-        # Keep track of byte stream for each socket.
-        prev_msg = dict()
-        for addr in self.all_addresses:
-            prev_msg.update({addr: ""})
-        
+    def handle_incoming_conn(self, server, s_id):
+        addr = self.config_dict[s_id]["ADDR"]
         while True:
-            for addr in self.all_addresses:
-                if addr == self.config_dict[self.swarmer_id]["ADDR"]:
-                    continue
-                msg = server.recv(addr) # set message size here
-                x = msg # debugging purposes
-                if msg:
-                    # Check if all of the bytes have arrived.
-                    if len(msg) != MSG_SIZE:
-                        # Check if a prev message exists.
-                        prev = prev_msg.get(addr)
-                        if len(prev) > 0:
-                            msg = prev + msg
-                            # If all of the bytes have been received, we are done.
-                            if len(msg) == MSG_SIZE:
-                                prev_msg.update({addr: ""})
-                            # Continue what we are doing until all bytes are received.
-                            else:
-                                prev_msg.update({addr: msg})
-                        # We are waiting for subsequent bytes.
-                        else:
-                            prev_msg.update({addr: msg})                    
-    
-                    # Only if the message is 1024 bytes add it to the queue.
-                    if len(msg) == MSG_SIZE:
-                        s_id = self.addr_dict[addr]
-                        q_idx = self.config_dict[s_id]["SHARED_Q_INDEX"]
-                        self.server_lock.acquire()
-                        # This is a bandaid. Idk why we are receiving malformed messages...
-                        if not msg.startswith("{"):
-                            msg = msg.split("{")[1]
-                            msg = "{" + msg
-                        if not msg.endswith("}"):
-                            msg = msg + '"' + "}"
-                        # Sanity check/for debugging purposes since this will happen down the line.
-                        try:
-                          json.loads(msg)  
-                          self.incoming_messages[q_idx].append(msg)
-                        except Exception as e:
-                            print("=============================")                        
-                            print(e)
-                            print(f"{x}")
-                            print("===============")                            
-                            print(f"{msg}")
-                            print("=============================")
-                            # The message is essentially dropped if it can't be properly parsed.
-                        self.server_lock.release()
+            msg = server.recv(addr)  # set message size here
+            # print(f"Received message {msg} from {s_id}")
+            if msg:
+                self.server_lock.acquire()
+                self.incoming_msg_dict[s_id].append(msg)
+                self.server_lock.release()
+            time.sleep(MSG_RECV_DELAY)
 
-
-    def handle_outgoing_conn(self, client, addr, port, idx):
+    def handle_outgoing_conn(self, client, addr, port, s_id):
+        print(f"Attempting to connect to {s_id}--{addr}--{port}")
         client.connect(addr, port)
-        self.client_count += 1        
+        print(f"Connected to {s_id}--{addr}--{port}")
+        self.client_count = self.client_count + 1
+        print(f"Client count: {self.client_count}")
         while True:
             msg = None
             self.client_lock.acquire()
-            if len(self.outgoing_messages[idx]) > 0:
-                msg = self.outgoing_messages[idx].pop(0)
+            if len(self.outgoing_msg_dict[s_id]) > 0:
+                msg = self.outgoing_msg_dict[s_id].pop(0)
+                # print(f">>> Sending message {msg} to {s_id}")
             self.client_lock.release()
             if msg:
                 client.send(msg)
@@ -228,7 +183,6 @@ class Node():
                 elif command == TERM:
                     print(self.term)
                 elif command == EXIT:
-                    self.server.clean_up()
                     print("Goodbye!")
                     return
                 else:
