@@ -1,9 +1,9 @@
 import keyboard
 from time import time
 
-from .bt_server import BT_Server
-from .KEYBOARD_CONFIG import KEYBOARD_CONFIG_DICT, DEBOUNCE_INTERVAL
-from .BT_CONFIG import BT_CONTROLLER_DICT
+from communication.bt_server import BT_Server
+from communication.KEYBOARD_CONFIG import KEYBOARD_CONFIG_DICT, DEBOUNCE_INTERVAL
+from communication.BT_CONFIG import BT_CONTROLLER_DICT
 
 
 def graceful_exit(func):
@@ -79,5 +79,6 @@ class Controller:
 
 
 if __name__ == '__main__':
-    control = Controller()
+    control = Controller(True)
     control.start()
+
