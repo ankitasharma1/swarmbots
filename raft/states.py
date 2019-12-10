@@ -5,10 +5,14 @@ from communication.MSG_CONFIG import REQUEST_VOTE, RESPONSE_VOTE, LEADER_HEARTBE
 
 from RAFT_CONFIG import CLUSTER_SIZE, FOLLOWER, CANDIDATE, LEADER, ELECTION_TIMEOUT
 
+from leader_drive import LeaderDriving
+from follower_drive import FollowerDriving
+
 old_time = time.time()
 sent_request_votes = False
 should_print_ctr = 0
-
+l = None
+f = None
 
 def do_raft(node):
     # Election timeout.
@@ -57,6 +61,7 @@ def do_raft(node):
                 leader_heartbeat = []
                 response_vote = []    
                 old_time = time.time()
+                handle_drive(node)
             
             # Continue being a follower.
             follower(node, request_vote, leader_heartbeat, election_timeout)
@@ -86,7 +91,8 @@ def do_raft(node):
                 # Clear queues if we are transitioning to a new state.
                 request_vote = []
                 leader_heartbeat = []
-                response_vote = []                      
+                response_vote = [] 
+                handle_drive(node)                                       
             else:
                 # Chill out if you've been the leader.
                 time.sleep(.2)
@@ -95,6 +101,26 @@ def do_raft(node):
             leader(node, leader_heartbeat, request_vote)
         else:
             print(f"Unknown state {node.state}")
+
+def handle_drive(node):
+    global l
+    global f
+
+    # Leader Drive
+    if node.state == LEADER:
+        print("LEADER DRIVE")
+        l = LeaderDriving(True)
+        l.drive()
+        if f:
+            f.stop()  
+    # Follower Drive                  
+    else:
+        print("FOLLOWER DRIVE")        
+        f = FollowerDriving(True)
+        f.drive()
+        if l:
+            l.stop()
+
 
 
 def follower(node, request_vote, leader_heartbeat, election_timeout):

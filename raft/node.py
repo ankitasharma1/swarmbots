@@ -85,8 +85,6 @@ class Node:
         t.setDaemon(True)
         t.start()
 
-        print("raft started, starting REPL")
-
         self.service_repl()
 
     def start_raft(self):
