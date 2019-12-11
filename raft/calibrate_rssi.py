@@ -40,7 +40,7 @@ class RssiCalibrator:
         for i in range(3):
             if i != 0:
                 self.motor.backward()
-                sleep(2)
+                sleep(1.5)
                 self.motor.stop()
             for s_id in S_IDS:
                 if s_id == SWARMER_ID:
