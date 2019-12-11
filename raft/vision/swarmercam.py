@@ -1,9 +1,11 @@
 import cv2
 
 class SwarmerCam(object):
-	def __init__(self, cascPath):
-                # TODO: Create three of these classifiers, one for each bot
-		self.cascade_classifier = cv2.CascadeClassifier(cascPath) 
+	def __init__(self):
+		# TODO: Create three of these classifiers, one for each bot
+		self.yellow_cascade = cv2.CascadeClassifier("training_results/trained_yellow/cascade.xml") 
+		self.orange_cascade = cv2.CascadeClassifier("training_results/trained_orange/cascade.xml") 
+		self.blue_cascade = cv2.CascadeClassifier("training_results/trained_blue/cascade.xml") 
 		self.video_capture = cv2.VideoCapture(0) # 0 = camera. A path to a video file also works
 		# Open the camera and get the frame properties 
 		vcap = self.video_capture # lazy
@@ -38,17 +40,31 @@ class SwarmerCam(object):
 		Note that (0,0) in our (and opencv's) view is the 
 		top-left of the image frame
 	"""
-	def pollCameraForLeader(self, debug=False):
+	def pollCameraForBot(self, debug=False):
 		# Capture a frame from the camera
 		ret, frame = self.video_capture.read()
 		camera_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) # TODO: Would non-gray be better?
 
-		# Detect any leader markers in view
-		leader_markers = self.cascade_classifier.detectMultiScale(
+		res = None
+		res = self.pollCascade(frame, camera_image, self.yellow_cascade, debug)
+		if res:
+		    return res
+		res = self.pollCascade(frame, camera_image, self.orange_cascade, debug)
+		if res:
+		    return res
+		res = self.pollCascade(frame, camera_image, self.blue_cascade, debug)
+		if res:
+		    return res
+
+		return res
+
+        # Detect any leader markers in view
+	def pollCascade(self, frame, camera_image, cascade_classfier, debug):
+		leader_markers = cascade_classfier.detectMultiScale(
 				camera_image,
 				scaleFactor=1.1, # TODO: 1.1 shrinks/'zooms out' the image
 				minNeighbors=4, # TODO: Tune. Smaller = more false positives. Bigger = higher detection threshold
-				minSize=(22,22), # TODO: Probably make this bigger since the leader marker won't be that far away
+				minSize=(20,20), # TODO: Probably make this bigger since the leader marker won't be that far away
 				flags=cv2.CASCADE_SCALE_IMAGE
 		)
 
@@ -74,17 +90,16 @@ class SwarmerCam(object):
 
 		return res
 
+		
 	def __del__(self):
 		self.video_capture.release()
 		cv2.destroyAllWindows()
 
 # For testing
 def main():
-	#  sc = SwarmerCam("training_results/trained_orange/cascade.xml")
-	sc = SwarmerCam("training_results/trained_yellow/cascade.xml")
-	sc = SwarmerCam("training_results/trained_blue/cascade.xml")
+	sc = SwarmerCam()
 	while True:
-		print(sc.pollCameraForLeader(debug=True))
+		print(sc.pollCameraForBot(debug=True))
 
 if __name__ == '__main__':
 	main()
