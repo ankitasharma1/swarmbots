@@ -1,15 +1,11 @@
 import sys
 from node import Node
+from communication.SWARMER_ID import SWARMER_ID
 
-# Check command line arguments.
-if len(sys.argv) != 2:
-    print('usage: main.py [id]')
-    sys.exit(1)
+# Callibrate per the room.
 
-# Unique node id.
-node_id = sys.argv[1]
 
-n = Node(node_id, wifi=False, debug=False)
+n = Node(SWARMER_ID, wifi=False, debug=False)
 
 # Node 'init' routine.
 n.init()
