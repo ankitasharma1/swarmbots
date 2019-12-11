@@ -16,6 +16,7 @@ class SwarmerCam(object):
 		# Note that (0,0) is the top-left of the camera frame
 		self.camera_center_x = int(width//2)
 		self.camera_center_y = int(height//2)
+		self.TOO_FAR_AREA = 30 * 30
 
 	"""
 		Takes a frame from the video camera and runs it through the
@@ -56,9 +57,10 @@ class SwarmerCam(object):
 		if res:
 		    return res
 
+		# (x offset, y offset, score)
 		return res
 
-        # Detect any leader markers in view
+	# Detect any leader markers in view
 	def pollCascade(self, frame, camera_image, cascade_classfier, debug):
 		leader_markers = cascade_classfier.detectMultiScale(
 				camera_image,
@@ -79,8 +81,9 @@ class SwarmerCam(object):
 			if debug:
 				cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 				cv2.circle(frame, (box_center_x, box_center_y), 5, (0, 255, 0), 2)
+				print("w:{},h:{}".format(w, h))
 			res = (int(box_center_x - self.camera_center_x), 
-					int(box_center_y - self.camera_center_y))
+					int(box_center_y - self.camera_center_y), should_move_forward(w, h))
 			break
 
 		if debug:
@@ -90,6 +93,12 @@ class SwarmerCam(object):
 
 		return res
 
+		
+	def should_move_forward(self, width, height):
+	    area = width * height
+	    if area <= self.TOO_FAR_AREA:
+	         return True
+	    return False
 		
 	def __del__(self):
 		self.video_capture.release()
