@@ -7,7 +7,7 @@ from communication.BT_CONFIG import S_IDS
 from motor.motor_driver import MotorDriver
 from motor.MOTOR_CONFIG import THROTTLE
 
-SAMPLE_SIZE = 1000
+SAMPLE_SIZE = 5000
 RESULT_FILE = 'rssi_ranges.pickle'
 
 
@@ -33,7 +33,9 @@ class RssiCalibrator:
                 if s_id == SWARMER_ID:
                     continue
                 rssi_samples = []
-                for _ in range(SAMPLE_SIZE):
+                for samp_idx in range(SAMPLE_SIZE):
+                    if samp_idx % 500 == 0:
+                        sleep(2)
                     rssi_samples.append(self.rssi.request_rssi(s_id))
                 self.rssi_dicts[s_id][i] = rssi_samples
         for i in range(3):
@@ -45,7 +47,9 @@ class RssiCalibrator:
                 if s_id == SWARMER_ID:
                     continue
                 rssi_samples = []
-                for _ in range(SAMPLE_SIZE):
+                for samp_idx in range(SAMPLE_SIZE):
+                    if samp_idx % 500 == 0:
+                        sleep(2)
                     rssi_samples.append(self.rssi.request_rssi(s_id))
                 self.rssi_dicts[s_id][i] += rssi_samples
 
