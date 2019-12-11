@@ -18,7 +18,7 @@ class FollowerDriving:
         self.motor = MotorDriver(THROTTLE)
         self.rssi_handler = RssiHandler(SWARMER_ID)
         self.on = False
-        self.swarmer_cam = SwarmerCam("blue", "orange", "yellow")
+        self.swarmer_cam = SwarmerCam()
 
     def drive(self):
         self.on = True

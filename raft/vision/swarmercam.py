@@ -1,17 +1,17 @@
 import cv2
 
-class SwarmerCam(object):
+
+class SwarmerCam:
 	def __init__(self):
 		# TODO: Create three of these classifiers, one for each bot
 		self.yellow_cascade = cv2.CascadeClassifier("training_results/trained_yellow/cascade.xml") 
 		self.orange_cascade = cv2.CascadeClassifier("training_results/trained_orange/cascade.xml") 
 		self.blue_cascade = cv2.CascadeClassifier("training_results/trained_blue/cascade.xml") 
 		self.video_capture = cv2.VideoCapture(0) # 0 = camera. A path to a video file also works
-		vid_cod = cv2.VideoWriter_fourcc(*'XVID')
-		self.output = cv2.VideoWriter("videos/cam_video.mp4",
-				vid_cod, 20.0, (640,480))
+		# vid_cod = cv2.VideoWriter_fourcc(*'XVID')
+		# self.output = cv2.VideoWriter("videos/cam_video.mp4", vid_cod, 20.0, (640,480))
 		# Open the camera and get the frame properties 
-		vcap = self.video_capture # lazy
+		vcap = self.video_capture  # lazy
 		if vcap.isOpened():
 			width = vcap.get(cv2.CAP_PROP_FRAME_WIDTH) # float
 			height = vcap.get(cv2.CAP_PROP_FRAME_HEIGHT) # float
@@ -53,13 +53,13 @@ class SwarmerCam(object):
 		res = None
 		res = self.pollCascade(frame, camera_image, self.yellow_cascade, debug)
 		if res:
-		    return res
+			return res
 		res = self.pollCascade(frame, camera_image, self.orange_cascade, debug)
 		if res:
-		    return res
+			return res
 		res = self.pollCascade(frame, camera_image, self.blue_cascade, debug)
 		if res:
-		    return res
+			return res
 
 		# (x offset, y offset, score)
 		return res
@@ -100,21 +100,23 @@ class SwarmerCam(object):
 
 		
 	def should_move_forward(self, width, height):
-	    area = width * height
-	    close_comp = abs(area - self.CLOSE_AREA)
-	    far_comp = abs(area - self.FAR_AREA)
-	    if close_comp <= far_comp:
-	        return True
+		area = width * height
+		close_comp = abs(area - self.CLOSE_AREA)
+		far_comp = abs(area - self.FAR_AREA)
+		if close_comp <= far_comp:
+			return True
 		
 	def __del__(self):
 		self.video_capture.release()
 		cv2.destroyAllWindows()
+
 
 # For testing
 def main():
 	sc = SwarmerCam()
 	while True:
 		print(sc.pollCameraForBot(debug=True))
+
 
 if __name__ == '__main__':
 	main()
