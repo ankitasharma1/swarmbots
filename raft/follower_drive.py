@@ -24,18 +24,17 @@ class FollowerDriving:
 
     def _drive(self):
         while self.on:
-            # Get score from RSSI.
-            rssi_score = get_rssi_score()
-            # Too Close.
-            if rssi_score == 1:
-                self.motor.backward()
-            # Too Far.
-            if rssi_score == 3:
+            res = self.swarmer_cam.pollCameraForBot()
+            x_coord = res[0]
+            y_coord = res[1]
+            should_drive = res[2]
+
+            # Need to drive.
+            if should_drive:
                 # Orient.
                 i = 0
                 while i < 3:
                     res = self.swarmer_cam.pollCameraForBot()
-                    x_coord = res[0]
                     # Left
                     if x_coord < 0:
                         self.motor.orient_left()
