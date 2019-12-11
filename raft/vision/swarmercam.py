@@ -107,7 +107,8 @@ class SwarmerCam:
 		close_comp = abs(area - self.CLOSE_AREA)
 		far_comp = abs(area - self.FAR_AREA)
 		if close_comp <= far_comp:
-			return True
+			return False
+		return True
 		
 	def __del__(self):
 		self.video_capture.release()

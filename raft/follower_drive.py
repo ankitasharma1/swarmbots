@@ -51,6 +51,7 @@ class FollowerDriving:
             if res:
                 x_offset = res[0]
                 should_drive = res[2]
+                print(f"{res}")
                 print(f"should drive? {should_drive}")
 
                 if self.am_i_oriented(x_offset):
