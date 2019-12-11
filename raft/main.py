@@ -1,7 +1,7 @@
 import sys
 from node import Node
 from communication.SWARMER_ID import SWARMER_ID
-from callibrate_rssi import RssiCalibrator
+from calibrate_rssi import RssiCalibrator
 
 # Callibrate per the room.
 r = RssiCalibrator()
