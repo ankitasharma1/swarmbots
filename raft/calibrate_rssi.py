@@ -35,7 +35,7 @@ class RssiCalibrator:
                 rssi_samples = []
                 for samp_idx in range(SAMPLE_SIZE):
                     if samp_idx % 1000 == 0:
-                        sleep(1)
+                        sleep(0.1)
                     rssi_samples.append(self.rssi.request_rssi(s_id))
                 if i - 2 < 0:
                     self.rssi_dicts[s_id][0] += rssi_samples
@@ -52,7 +52,7 @@ class RssiCalibrator:
                 rssi_samples = []
                 for samp_idx in range(SAMPLE_SIZE):
                     if samp_idx % 1000 == 0:
-                        sleep(1)
+                        sleep(0.1)
                     rssi_samples.append(self.rssi.request_rssi(s_id))
                 if i - 2 < 0:
                     self.rssi_dicts[s_id][0] += rssi_samples
