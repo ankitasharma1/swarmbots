@@ -45,3 +45,13 @@ class RssiHandler:
             if comp_close >= comp_far:
                 return True
         return False
+
+
+if __name__ == '__main__':
+    from communication.SWARMER_ID import SWARMER_ID
+    from time import sleep
+
+    r = RssiHandler(SWARMER_ID)
+    for _ in range(5):
+        sleep(10)
+        print(r.am_i_close())
