@@ -1,4 +1,5 @@
 #!/bin/bash
 
 RAFT_DIR="/home/pi/Code/swarmbots/raft"
-python3 $RAFT_DIR/main.py
+cd $RAFT_DIR
+python3 main.py
