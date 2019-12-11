@@ -25,7 +25,7 @@ def do_raft(node):
     response_vote = []    
 
     # Starts as a follower.
-    node.old_state = FOLLOWER
+    node.old_state = ""
     node.state = FOLLOWER
     
     global old_time
