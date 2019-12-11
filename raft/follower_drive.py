@@ -10,7 +10,7 @@ from motor.motor_driver import MotorDriver
 from motor.MOTOR_CONFIG import THROTTLE, RUN_TIME
 from rssi_handler import RssiHandler
 
-ORIENT_CHILL = 1
+ORIENT_CHILL = 5
 
 
 # This file should be run on the bot and connect to the server running on the
@@ -51,22 +51,22 @@ class FollowerDriving:
             if res:
                 x_offset = res[0]
                 should_drive = res[2]
-                print(f"{res}")
-                print(f"should drive? {should_drive}")
+                # print(f"{res}")
+                # print(f"should drive? {should_drive}")
 
                 if self.am_i_oriented(x_offset):
-                    print("oriented!")
+                    # print("oriented!")
                     # We are far away from something in view.
                     if should_drive:
                         if self.rssi_handler.am_i_close():
-                            print("doing random backoff")
+                            # print("doing random backoff")
                             self.random_backoff()
-                        print("driving forward")
+                        # print("driving forward")
                         self.motor.forward()
                         time.sleep(1.5)
                         self.motor.stop()
             else:
-                print("not oriented")
+                # print("not oriented")
                 self.orient()
 
     def random_backoff(self):
@@ -74,7 +74,7 @@ class FollowerDriving:
         time.sleep(random.randrange(0, 4))
 
     def am_i_oriented(self, x_offset):
-        if abs(x_offset) < 120:
+        if abs(x_offset) < 100:
             return True
         return False
 
@@ -95,17 +95,17 @@ class FollowerDriving:
                     # Left
                     if x_offset < 0:
                         self.motor.orient_left()
-                        time.sleep(0.1)
+                        time.sleep(0.075)
                     # Right
                     else:
                         self.motor.orient_right()
-                        time.sleep(0.1)
+                        time.sleep(0.075)
                     self.motor.stop()
                     self.last_orient = time.time()
 
             elif not self.debounce():
                 self.motor.orient_right()
-                time.sleep(0.1)
+                time.sleep(0.075)
                 self.motor.stop()
                 self.last_orient = time.time()
 
