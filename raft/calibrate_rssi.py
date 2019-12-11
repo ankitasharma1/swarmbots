@@ -1,6 +1,5 @@
 from time import sleep
 import pickle
-from pprint import pprint
 
 from communication.rssi import BT_RSSI
 from communication.SWARMER_ID import SWARMER_ID
@@ -8,14 +7,14 @@ from communication.BT_CONFIG import S_IDS
 from motor.motor_driver import MotorDriver
 from motor.MOTOR_CONFIG import THROTTLE
 
-SAMPLE_SIZE = 50
+SAMPLE_SIZE = 1000
 RESULT_FILE = 'rssi_ranges.pickle'
 
 
 class RssiCalibrator:
     def __init__(self):
         self.rssi_dicts = {}
-        self.motor = MotorDriver(THROTTLE / 2)
+        self.motor = MotorDriver(THROTTLE / 1.3)
         self.rssi = BT_RSSI()
 
     def calibrate(self):
@@ -28,7 +27,7 @@ class RssiCalibrator:
         for i in range(3):
             if i != 0:
                 self.motor.forward()
-                sleep(2)
+                sleep(1.5)
                 self.motor.stop()
             for s_id in S_IDS:
                 if s_id == SWARMER_ID:
@@ -51,7 +50,7 @@ class RssiCalibrator:
                 self.rssi_dicts[s_id][i] += rssi_samples
 
     def print_rssi(self):
-        pprint(self.rssi_dicts)
+        print(self.rssi_dicts)
 
     def store_rssi(self):
         with open(RESULT_FILE, 'wb') as f:
@@ -78,7 +77,7 @@ class RssiCalibrator:
 if __name__ == '__main__':
     r = RssiCalibrator()
     r.calibrate()
-    r.print_rssi()
+    # r.print_rssi()
     r.store_rssi()
     r.print_avgs()
     r.sanity_check()
