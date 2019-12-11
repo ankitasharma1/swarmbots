@@ -7,6 +7,9 @@ class SwarmerCam(object):
 		self.orange_cascade = cv2.CascadeClassifier("training_results/trained_orange/cascade.xml") 
 		self.blue_cascade = cv2.CascadeClassifier("training_results/trained_blue/cascade.xml") 
 		self.video_capture = cv2.VideoCapture(0) # 0 = camera. A path to a video file also works
+		vid_cod = cv2.VideoWriter_fourcc(*'XVID')
+		self.output = cv2.VideoWriter("videos/cam_video.mp4",
+				vid_cod, 20.0, (640,480))
 		# Open the camera and get the frame properties 
 		vcap = self.video_capture # lazy
 		if vcap.isOpened():
@@ -16,7 +19,8 @@ class SwarmerCam(object):
 		# Note that (0,0) is the top-left of the camera frame
 		self.camera_center_x = int(width//2)
 		self.camera_center_y = int(height//2)
-		self.TOO_FAR_AREA = 30 * 30
+		self.FAR_AREA = 986
+		self.CLOSE_AREA = 20329
 
 	"""
 		Takes a frame from the video camera and runs it through the
@@ -47,13 +51,13 @@ class SwarmerCam(object):
 		camera_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) # TODO: Would non-gray be better?
 
 		res = None
-		res = self.pollCascade(frame, camera_image, self.yellow_cascade, debug)
+		#res = self.pollCascade(frame, camera_image, self.yellow_cascade, debug)
 		if res:
 		    return res
 		res = self.pollCascade(frame, camera_image, self.orange_cascade, debug)
 		if res:
 		    return res
-		res = self.pollCascade(frame, camera_image, self.blue_cascade, debug)
+		#res = self.pollCascade(frame, camera_image, self.blue_cascade, debug)
 		if res:
 		    return res
 
@@ -81,13 +85,14 @@ class SwarmerCam(object):
 			if debug:
 				cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 				cv2.circle(frame, (box_center_x, box_center_y), 5, (0, 255, 0), 2)
-				print("w:{},h:{}".format(w, h))
+				print("w:{},h:{},A={}".format(w, h, w*h))
 			res = (int(box_center_x - self.camera_center_x), 
-					int(box_center_y - self.camera_center_y), should_move_forward(w, h))
+					int(box_center_y - self.camera_center_y), self.should_move_forward(w, h))
 			break
 
 		if debug:
 			cv2.circle(frame, (self.camera_center_x, self.camera_center_y), 5, (255,0,0),2)
+			# self.output.write(frame)
 			cv2.imshow('Video', frame) # TODO: For now we can't turn it off in the code
 			cv2.waitKey(1)
 
@@ -96,9 +101,10 @@ class SwarmerCam(object):
 		
 	def should_move_forward(self, width, height):
 	    area = width * height
-	    if area <= self.TOO_FAR_AREA:
-	         return True
-	    return False
+	    close_comp = abs(area - self.CLOSE_AREA)
+	    far_comp = abs(area - self.FAR_AREA)
+	    if close_comp <= far_comp:
+	        return True
 		
 	def __del__(self):
 		self.video_capture.release()
