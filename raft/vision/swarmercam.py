@@ -1,12 +1,14 @@
 import cv2
 
+path_prefix = '/home/pi/Code/swarmbots/raft/vision/training_results/'
+
 
 class SwarmerCam:
 	def __init__(self):
 		# TODO: Create three of these classifiers, one for each bot
-		self.yellow_cascade = cv2.CascadeClassifier("training_results/trained_yellow/cascade.xml") 
-		self.orange_cascade = cv2.CascadeClassifier("training_results/trained_orange/cascade.xml") 
-		self.blue_cascade = cv2.CascadeClassifier("training_results/trained_blue/cascade.xml") 
+		self.yellow_cascade = cv2.CascadeClassifier(path_prefix + "trained_yellow/cascade.xml")
+		self.orange_cascade = cv2.CascadeClassifier(path_prefix + "trained_orange/cascade.xml")
+		self.blue_cascade = cv2.CascadeClassifier(path_prefix + "trained_blue/cascade.xml")
 		self.video_capture = cv2.VideoCapture(0) # 0 = camera. A path to a video file also works
 		# vid_cod = cv2.VideoWriter_fourcc(*'XVID')
 		# self.output = cv2.VideoWriter("videos/cam_video.mp4", vid_cod, 20.0, (640,480))
@@ -66,14 +68,11 @@ class SwarmerCam:
 
 	# Detect any leader markers in view
 	def pollCascade(self, frame, camera_image, cascade_classfier, debug):
-		if not camera_image or not frame:
-			return None
-
 		leader_markers = cascade_classfier.detectMultiScale(
 				camera_image,
-				scaleFactor=1.1, # TODO: 1.1 shrinks/'zooms out' the image
-				minNeighbors=4, # TODO: Tune. Smaller = more false positives. Bigger = higher detection threshold
-				minSize=(20,20), # TODO: Probably make this bigger since the leader marker won't be that far away
+				scaleFactor=1.1,  # TODO: 1.1 shrinks/'zooms out' the image
+				minNeighbors=4,  # TODO: Tune. Smaller = more false positives. Bigger = higher detection threshold
+				minSize=(20, 20),  # TODO: Probably make this bigger since the leader marker won't be that far away
 				flags=cv2.CASCADE_SCALE_IMAGE
 		)
 
