@@ -35,10 +35,10 @@ class RssiCalibrator:
                 rssi_samples = []
                 for samp_idx in range(SAMPLE_SIZE):
                     if samp_idx % 500 == 0:
-                        sleep(2)
+                        sleep(1)
                     rssi_samples.append(self.rssi.request_rssi(s_id))
                 self.rssi_dicts[s_id][i] = rssi_samples
-        for i in range(3):
+        for i in range(2, -1, -1):
             if i != 0:
                 self.motor.backward()
                 sleep(1.5)
@@ -49,7 +49,7 @@ class RssiCalibrator:
                 rssi_samples = []
                 for samp_idx in range(SAMPLE_SIZE):
                     if samp_idx % 500 == 0:
-                        sleep(2)
+                        sleep(1)
                     rssi_samples.append(self.rssi.request_rssi(s_id))
                 self.rssi_dicts[s_id][i] += rssi_samples
 
