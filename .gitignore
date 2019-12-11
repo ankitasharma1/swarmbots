@@ -1,7 +1,6 @@
 *.pyc
 .vscode/
 .idea/
-*.xml
 *.swp
 SWARMER_ID.py
 __pycache__/
