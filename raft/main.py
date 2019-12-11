@@ -1,15 +1,15 @@
 import sys
 from node import Node
+from communication.SWARMER_ID import SWARMER_ID
+from callibrate_rssi import RssiCalibrator
 
-# Check command line arguments.
-if len(sys.argv) != 2:
-    print('usage: main.py [id]')
-    sys.exit(1)
+# Callibrate per the room.
+r = RssiCalibrator()
+r.calibrate()
+r.store_rssi()
 
-# Unique node id.
-node_id = sys.argv[1]
+# Create the node object.
+n = Node(SWARMER_ID, wifi=False, debug=False)
 
-n = Node(node_id, wifi=False, debug=False)
-
-# Node 'init' routine.
+# Run 'init' routine.
 n.init()
