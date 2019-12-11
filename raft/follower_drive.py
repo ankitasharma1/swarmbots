@@ -82,6 +82,10 @@ class FollowerDriving:
                     self.motor.orient_right()
                     time.sleep(0.25)
                 self.motor.stop()
+            else:
+                self.motor.orient_right()
+                time.sleep(0.25)
+                self.motor.stop()
 
     def stop(self):
         # testing allows stopping and starting without killing the conn
