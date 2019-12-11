@@ -4,3 +4,4 @@
 *.swp
 SWARMER_ID.py
 __pycache__/
+rssi_ranges.pickle
