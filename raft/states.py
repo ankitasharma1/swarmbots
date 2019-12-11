@@ -102,25 +102,29 @@ def do_raft(node):
         else:
             print(f"Unknown state {node.state}")
 
+
 def handle_drive(node):
     global l
     global f
 
     # Leader Drive
     if node.state == LEADER:
-        print("LEADER DRIVE")
-        l = LeaderDriving(True)
-        l.drive()
         if f:
-            f.stop()  
-    # Follower Drive                  
+            print("stopping follower drive")
+            f.stop()
+            f = None
+        print("LEADER DRIVE")
+        l = LeaderDriving()
+        l.drive()
+    # Follower Drive
     else:
-        print("FOLLOWER DRIVE")        
-        f = FollowerDriving(True)
-        f.drive()
         if l:
+            print("stopping leader drive")
             l.stop()
-
+            l = None
+        print("FOLLOWER DRIVE")
+        f = FollowerDriving()
+        f.drive()
 
 
 def follower(node, request_vote, leader_heartbeat, election_timeout):
