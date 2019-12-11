@@ -90,7 +90,8 @@ class SwarmerCam:
 				cv2.circle(frame, (box_center_x, box_center_y), 5, (0, 255, 0), 2)
 				print("w:{},h:{},A={}".format(w, h, w*h))
 			res = (int(box_center_x - self.camera_center_x), 
-					int(box_center_y - self.camera_center_y), self.should_move_forward(w, h))
+				int(box_center_y - self.camera_center_y),
+				self.should_move_forward(w, h))
 			break
 
 		if debug:
@@ -101,7 +102,6 @@ class SwarmerCam:
 
 		return res
 
-		
 	def should_move_forward(self, width, height):
 		area = width * height
 		close_comp = abs(area - self.CLOSE_AREA)

@@ -48,7 +48,7 @@ class LeaderDriving:
                 if cmd == 'left':
                     self.motor.left()
                 self.last_press = time.time()
-                print(f"Command {cmd}")
+                # print(f"Command {cmd}")
     
     def stop(self, testing=False):
         # testing allows stopping and starting without killing the conn
