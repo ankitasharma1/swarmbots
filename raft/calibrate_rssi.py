@@ -23,35 +23,41 @@ class RssiCalibrator:
                 continue
             self.rssi.connect(s_id)
             print(f"connected to {s_id}")
-            self.rssi_dicts[s_id] = {0: None, 1: None, 2: None}
-        for i in range(3):
-            if i != 0:
+            self.rssi_dicts[s_id] = {0: [], 1: []}
+        for i in range(4):
+            if i != 0 or i != 3:
                 self.motor.forward()
-                sleep(1.5)
+                sleep(1)
                 self.motor.stop()
             for s_id in S_IDS:
                 if s_id == SWARMER_ID:
                     continue
                 rssi_samples = []
                 for samp_idx in range(SAMPLE_SIZE):
-                    if samp_idx % 500 == 0:
+                    if samp_idx % 1000 == 0:
                         sleep(1)
                     rssi_samples.append(self.rssi.request_rssi(s_id))
-                self.rssi_dicts[s_id][i] = rssi_samples
-        for i in range(2, -1, -1):
-            if i != 0:
+                if i - 2 < 0:
+                    self.rssi_dicts[s_id][0] += rssi_samples
+                else:
+                    self.rssi_dicts[s_id][1] += rssi_samples
+        for i in range(3, -1, -1):
+            if i != 0 or i != 3:
                 self.motor.backward()
-                sleep(1.5)
+                sleep(1)
                 self.motor.stop()
             for s_id in S_IDS:
                 if s_id == SWARMER_ID:
                     continue
                 rssi_samples = []
                 for samp_idx in range(SAMPLE_SIZE):
-                    if samp_idx % 500 == 0:
+                    if samp_idx % 1000 == 0:
                         sleep(1)
                     rssi_samples.append(self.rssi.request_rssi(s_id))
-                self.rssi_dicts[s_id][i] += rssi_samples
+                if i - 2 < 0:
+                    self.rssi_dicts[s_id][0] += rssi_samples
+                else:
+                    self.rssi_dicts[s_id][1] += rssi_samples
 
     def print_rssi(self):
         print(self.rssi_dicts)
@@ -65,11 +71,9 @@ class RssiCalibrator:
             if s_id == SWARMER_ID:
                 continue
             close_avg = sum(self.rssi_dicts[s_id][0]) / len(self.rssi_dicts[s_id][0])
-            mid_avg = sum(self.rssi_dicts[s_id][1]) / len(self.rssi_dicts[s_id][1])
-            far_avg = sum(self.rssi_dicts[s_id][2]) / len(self.rssi_dicts[s_id][2])
+            far_avg = sum(self.rssi_dicts[s_id][1]) / len(self.rssi_dicts[s_id][1])
 
             print(f"{s_id} close avg dbm: {close_avg}")
-            print(f"{s_id} mid avg dbm: {mid_avg}")
             print(f"{s_id} far avg dbm: {far_avg}")
 
     def sanity_check(self):
