@@ -19,7 +19,8 @@ class SwarmerCam(object):
 		# Note that (0,0) is the top-left of the camera frame
 		self.camera_center_x = int(width//2)
 		self.camera_center_y = int(height//2)
-		self.TOO_FAR_AREA = 30 * 30
+		self.FAR_AREA = 986
+		self.CLOSE_AREA = 20329
 
 	"""
 		Takes a frame from the video camera and runs it through the
@@ -84,7 +85,7 @@ class SwarmerCam(object):
 			if debug:
 				cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 				cv2.circle(frame, (box_center_x, box_center_y), 5, (0, 255, 0), 2)
-				print("w:{},h:{}".format(w, h))
+				print("w:{},h:{},A={}".format(w, h, w*h))
 			res = (int(box_center_x - self.camera_center_x), 
 					int(box_center_y - self.camera_center_y), self.should_move_forward(w, h))
 			break
@@ -100,9 +101,10 @@ class SwarmerCam(object):
 		
 	def should_move_forward(self, width, height):
 	    area = width * height
-	    if area <= self.TOO_FAR_AREA:
+	    close_comp = abs(area - self.CLOSE_AREA)
+	    far_comp = abs(area - self.FAR_AREA)
+	    if close_comp <= far_comp:
 	        return True
-	    return False
 		
 	def __del__(self):
 		self.video_capture.release()
