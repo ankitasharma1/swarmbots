@@ -141,7 +141,7 @@ def follower(node, request_vote, leader_heartbeat, election_timeout):
     else:
         # Check if we have correspondance from the leader.
         if len(leader_heartbeat) > 0:
-            if should_print_ctr % 50 == 0:
+            # if should_print_ctr % 50 == 0:
                 # print(">>> F: leader correspondance")
             leader_heartbeat_message = leader_heartbeat.pop(0)
             leader_term = int(leader_heartbeat_message['curr_term'])
@@ -266,7 +266,7 @@ def leader(node, leader_heartbeat, request_vote):
 
     # Process competing request vote.
     if len(request_vote) > 0:
-        if should_print_ctr % 50 == 0:
+        # if should_print_ctr % 50 == 0:
             # print(">>> Received request vote")
         request_vote_message = request_vote.pop(0)
         candidate_term = int(request_vote_message['curr_term'])
@@ -292,7 +292,7 @@ def leader(node, leader_heartbeat, request_vote):
         leader_term = int(leader_heartbeat_message['curr_term'])
 
         if leader_term > node.term:
-            if should_print_ctr % 50 == 0:
+            # if should_print_ctr % 50 == 0:
                 # print(f">>> L: correspondance from leader with term {leader_term}--> follower")
             node.term = leader_term  
             node.voted_for = None
@@ -301,7 +301,7 @@ def leader(node, leader_heartbeat, request_vote):
             return                             
 
     # Send leader heartbeats to everyone.
-    if should_print_ctr % 50 == 0:
+    # if should_print_ctr % 50 == 0:
         # print(f">>> Sending heartbeat messages to {node.other_s_ids}")
     node.send_to(node.other_s_ids, leader_heartbeat_msg(node.swarmer_id, node.term))
         
