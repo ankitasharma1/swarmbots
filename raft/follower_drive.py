@@ -1,4 +1,4 @@
-from threading import Thread
+from threading import Thread, Lock
 import time
 import random
 
@@ -10,24 +10,35 @@ from motor.motor_driver import MotorDriver
 from motor.MOTOR_CONFIG import THROTTLE, RUN_TIME
 from rssi_handler import RssiHandler
 
+ORIENT_CHILL = 1
+
 
 # This file should be run on the bot and connect to the server running on the
 # the controller
 class FollowerDriving:
     def __init__(self):
-        self.motor = MotorDriver(THROTTLE / 1.3)
+        self.motor = MotorDriver(THROTTLE / 1.5)
         self.rssi_handler = RssiHandler(SWARMER_ID)
         self.on = False
+        self.lock = Lock()
         self.swarmer_cam = SwarmerCam()
+        self.last_orient = time.time()
 
     def drive(self):
+        self.lock.acquire()
         self.on = True
+        self.lock.release()
         t = Thread(target=self._drive)
         t.setDaemon(True)
         t.start()
 
     def _drive(self):
-        while self.on:
+        while True:
+            self.lock.acquire()
+            if not self.on:
+                self.lock.release()
+                break
+            self.lock.release()
             res = None
             # Poll for swarm a few times before making any decisions.
             for _ in range(3):
@@ -51,7 +62,7 @@ class FollowerDriving:
                             self.random_backoff()
                         print("driving forward")
                         self.motor.forward()
-                        time.sleep(1)
+                        time.sleep(1.5)
                         self.motor.stop()
             else:
                 print("not oriented")
@@ -62,34 +73,53 @@ class FollowerDriving:
         time.sleep(random.randrange(0, 4))
 
     def am_i_oriented(self, x_offset):
-        if abs(x_offset) < 100:
+        if abs(x_offset) < 120:
             return True
         return False
 
     def orient(self):
         while True:
+            self.lock.acquire()
+            if not self.on:
+                self.lock.release()
+                break
+            self.lock.release()
             res = self.swarmer_cam.pollCameraForBot()
             if res:
-                x_offset = res[0]                
+                x_offset = res[0]
                 if self.am_i_oriented(x_offset):
                     break
-                # Left
-                if x_offset < 0:
-                    self.motor.orient_left()
-                    time.sleep(0.25)
-                # Right
-                else:
-                    self.motor.orient_right()
-                    time.sleep(0.25)
-                self.motor.stop()
-            else:
+
+                if not self.debounce():
+                    # Left
+                    if x_offset < 0:
+                        self.motor.orient_left()
+                        time.sleep(0.1)
+                    # Right
+                    else:
+                        self.motor.orient_right()
+                        time.sleep(0.1)
+                    self.motor.stop()
+                    self.last_orient = time.time()
+
+            elif not self.debounce():
                 self.motor.orient_right()
-                time.sleep(0.25)
+                time.sleep(0.1)
                 self.motor.stop()
+                self.last_orient = time.time()
+
+    def debounce(self):
+        elapsed_time = time.time() - self.last_orient
+        if elapsed_time > ORIENT_CHILL:
+            return False
+        else:
+            return True
 
     def stop(self):
         # testing allows stopping and starting without killing the conn
+        self.lock.acquire()
         self.on = False
+        self.lock.release()
         time.sleep(0.1)
         self.motor.stop()
 
