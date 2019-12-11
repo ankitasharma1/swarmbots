@@ -66,6 +66,9 @@ class SwarmerCam:
 
 	# Detect any leader markers in view
 	def pollCascade(self, frame, camera_image, cascade_classfier, debug):
+		if not camera_image or not frame:
+			return None
+
 		leader_markers = cascade_classfier.detectMultiScale(
 				camera_image,
 				scaleFactor=1.1, # TODO: 1.1 shrinks/'zooms out' the image
@@ -77,6 +80,7 @@ class SwarmerCam:
 		res = None
 		# (We only use the first marker detected)
 		for (x, y, w, h) in leader_markers:
+			print("Detected a bot")
 			# Calculate the center of the bounding box
 			box_center_x = x + (w//2)
 			box_center_y = y + (h//2)

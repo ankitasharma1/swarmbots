@@ -1,5 +1,5 @@
 from threading import Thread
-from time import time
+import time
 
 from communication.bt_client import BT_Client
 from communication.BT_CONFIG import BT_ADDR_DICT, BT_CONTROLLER_DICT
@@ -47,19 +47,19 @@ class LeaderDriving:
                     self.motor.right()
                 if cmd == 'left':
                     self.motor.left()
-                self.last_press = time()
+                self.last_press = time.time()
                 print(f"Command {cmd}")
     
     def stop(self, testing=False):
         # testing allows stopping and starting without killing the conn
         self.on = False
-        sleep(0.15)
+        time.sleep(0.15)
         self.motor.stop()
         if not testing:
             self.client.clean_up()
     
     def debounce(self):
-        elapsed_time = time() - self.last_press
+        elapsed_time = time.time() - self.last_press
         if elapsed_time > RUN_TIME:
             return False
         else:
