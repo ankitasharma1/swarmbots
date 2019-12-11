@@ -34,14 +34,21 @@ class RssiHandler:
         for s_id in S_IDS:
             if s_id == self.my_id:
                 continue
+
             self.rssi_reading_dict[s_id] = []
             for _ in range(SAMPLE_SIZE):
                 self.rssi_reading_dict[s_id].append(self.bt_rssi.request_rssi(s_id))
             reading_avg = sum(self.rssi_reading_dict[s_id]) / len(self.rssi_reading_dict[s_id])
+            print(f"reading avg: {reading_avg}")
+
             close_range_avg = sum(self.rssi_range_dict[s_id][0]) / len(self.rssi_range_dict[s_id][0])
             far_range_avg = sum(self.rssi_range_dict[s_id][1]) / len(self.rssi_range_dict[s_id][1])
+
             comp_close = abs(reading_avg - close_range_avg)
+            print(f"comp close: {comp_close}")
             comp_far = abs(reading_avg - far_range_avg)
+            print(f"comp far: {comp_far}")
+
             if comp_close >= comp_far:
                 return True
         return False
