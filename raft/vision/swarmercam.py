@@ -51,13 +51,13 @@ class SwarmerCam(object):
 		camera_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) # TODO: Would non-gray be better?
 
 		res = None
-		#res = self.pollCascade(frame, camera_image, self.yellow_cascade, debug)
+		res = self.pollCascade(frame, camera_image, self.yellow_cascade, debug)
 		if res:
 		    return res
 		res = self.pollCascade(frame, camera_image, self.orange_cascade, debug)
 		if res:
 		    return res
-		#res = self.pollCascade(frame, camera_image, self.blue_cascade, debug)
+		res = self.pollCascade(frame, camera_image, self.blue_cascade, debug)
 		if res:
 		    return res
 
