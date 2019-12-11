@@ -49,7 +49,7 @@ class RssiHandler:
             comp_far = abs(reading_avg - far_range_avg)
             print(f"comp far: {comp_far}")
 
-            if comp_close >= comp_far:
+            if comp_close <= comp_far:
                 return True
         return False
 
