@@ -11,16 +11,16 @@ __TODO:__
 * [JA] ~~Figure out how to mount the camera to a robot~~
 * [JR] ~~Put together controller hardware~~
 * [AS] ~~Write start-up scripts for controller~~
-* [\*] Write Usage Section
-* [\*] Write Hardware Section
+* [\*] ~~Write Usage Section~~
+* [\*] ~~Write Hardware Section~~
 * [\*] Write Software Section
-* [AS] Update website with progress
+* [AS] ~~Update website with progress~~
+* [JR] Test possible speed up by replacing BT and OpenCV threads with Processes
 
 ## Usage
-
-1. Install `Python 3`
-
-Run ./scripts/main_script.sh to kick off bash scripts on each pi.
+1. Setup each Pi to accept SSH
+2. Follow the `setup_readme.md` in each subfolder -- this involves installing libraries, writing configs, and setting environment variables
+3. Run `./scripts/main_script.sh` from your main computer to kick off bash scripts on each Pi
 
 ## Hardware
 ### Car
@@ -59,7 +59,10 @@ Run ./scripts/main_script.sh to kick off bash scripts on each pi.
 ### Motor
 #### Drivers
 ### Communication
-#### Bluetooth Communication
+#### Interbot Communication
+Communication between bots is done over Bluetooth. Each bot is fully connected to the cluster excluding the controller. Only the controller and the current Leader bot have a Bluetooth connection. The `bt_server.py` and `bt_client.py` files contain code wrapping the pybluez bluetooth python library. The wrapper code adds debug-printing, uniform messaging, and self-healing features to both clients and servers.
+#### RSSI
+The bots use Bluetooth l2ping to collect RSSI (received signal strength indicator) between each bot in order to prevent collision. The `rssi.py` and `rssi_handler.py` are our implementations of an automated RSSI collector. They were made to take an arbitrary number of samples and save their metrics to a python pickle file to be used by other python processes. The `rssi_calibrator.py` calibrates the collector so that the samples are reliable. It calibrates by taking 5000 samples at 4 different points in the movement space then uses euclidian distance from the samples to quantify a custom _too-close_ area band for each bot. 
 ### Raft
 #### Leader
 #### Candidate
