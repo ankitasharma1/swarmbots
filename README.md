@@ -57,18 +57,32 @@ __TODO:__
 
 ## Software
 ### Motor
-#### Drivers
+The motor uses adafruit circuit-python's motor driver library. We implemented a wrapper around the libraries APIs to give the motors a failsafe and make modularized calls to move.
+
 ### Communication
 #### Interbot Communication
 Communication between bots is done over Bluetooth. Each bot is fully connected to the cluster excluding the controller. Only the controller and the current Leader bot have a Bluetooth connection. The `bt_server.py` and `bt_client.py` files contain code wrapping the pybluez bluetooth python library. The wrapper code adds debug-printing, uniform messaging, and self-healing features to both clients and servers.
+
 #### RSSI
 The bots use Bluetooth l2ping to collect RSSI (received signal strength indicator) between each bot in order to prevent collision. The `rssi.py` and `rssi_handler.py` are our implementations of an automated RSSI collector. They were made to take an arbitrary number of samples and save their metrics to a python pickle file to be used by other python processes. The `rssi_calibrator.py` calibrates the collector so that the samples are reliable. It calibrates by taking 5000 samples at 4 different points in the movement space then uses euclidian distance from the samples to quantify a custom _too-close_ area band for each bot. 
+
 ### Raft
+Our bots run RAFT's election protocol found here [raft](https://raft.github.io/raft.pdf). All bots will start in the Follower state.
+
 #### Leader
+Each bot has successfully been elected leader it will stop running openCV and stop pinging for RSSI. It will then connect to the controller and start accept drive commands. It will also send heartbeat messages to all its followers.
+
 #### Candidate
+During the candidate state, the bot will stop motor functions, openCV, and RSSI pings. It will wait until its election is over to start driving again.
+
 #### Follower
+A bot in a follower state will start openCV to orient itself, RSSI pings to prevent collision and sense when the leader is out of range. 
+
 ### OpenCV
+We put uniquely designed sticky notes on the back of each bot then trained a cascade model to recognize them. We also wrote code to wrap around the classification to give us the height, width, and relative position of the classification so that our bots could orient themselves towards a sticky note. The model is trained to recognize any of the sticky notes, including its own. This solves the problem of a follower eclipsing the leader from another follower. In the event of an eclipse, the eclipsed bot will simply form a caravan-like formation, following the follow in front of it.
+
 ### Entry Scripts
+TODO
 
 ## Misc
 [check out our website](https://swarmyswarmers.github.io)
